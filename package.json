@@ -1,7 +1,7 @@
 {
   "name": "taskbar-pos-hero-nuea",
   "productName": "POS Hero เหนือ",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Thai POS reconciliation tool, reskinned as a taskbar-docked hero widget (inspired by TBH: Task Bar Hero) — ร้านเหนือ variant",
   "main": "main.js",
   "author": "xziramoon",
