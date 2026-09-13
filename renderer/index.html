@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>POS Hero เหนือ</title>
+    <script>
+        // Apply the saved theme before any CSS paints, so there's no flash
+        // of the default amber palette on startup.
+        (function () {
+            try {
+                var saved = localStorage.getItem('heroTheme');
+                if (saved) document.documentElement.setAttribute('data-theme', saved);
+            } catch (e) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="theme-hero.css">
+</head>
+<body>
+
+    <!-- 🪙 MINI WIDGET — TBH-style tiny always-on-top HUD shown while "minimized".
+         Hidden by default; renderer/hero-chrome.js toggles body.mini-mode based
+         on main.js's mode-changed IPC and swaps this in instead of hiding entirely. -->
+    <div id="miniWidget" class="no-print" title="คลิกเพื่อขยายเต็มจอ (ลากเพื่อย้ายตำแหน่ง)">
+        <span class="mini-pb-led" id="miniPbLed" title="สถานะ Pushbullet"></span>
+        <span class="mini-expand-hint">⤢</span>
+        <div class="mini-coin"></div>
+        <div class="mini-info">
+            <div class="mini-label">สุทธิวันนี้</div>
+            <div class="mini-amount" id="miniSumNet">0</div>
+            <div class="mini-sub" id="miniLastTx">— ยังไม่มีรายการ —</div>
+        </div>
+    </div>
+
+    <!-- Full-viewport curtain used only during the enter/exit mini-mode
+         transition — see renderer/theme-hero.css's #modeShutter rules and
+         hero-chrome.js's mode-transition handling. Masks the native window
+         resize (Windows has no smooth-resize API) so it lands invisibly. -->
+    <div id="modeShutter" class="no-print"></div>
+
+    <!-- ⚔️ HERO TITLEBAR — frameless window drag region + window controls -->
+    <div class="hero-titlebar no-print">
+        <div class="hero-titlebar-drag">
+            <span class="hero-coin">🪙</span>
+            <span class="hero-title-text">POS HERO</span>
+            <span class="hero-subtitle">TASKBAR RECON WIDGET</span>
+            <span class="pb-led" id="pbLed" title="สถานะ Pushbullet"></span>
+        </div>
+        <div class="hero-titlebar-btns">
+            <button class="hero-tbtn" id="btnTheme" title="เปลี่ยนธีมสี" onclick="openThemeModal()">🎨</button>
+            <button class="hero-tbtn" id="btnPin" title="ปักหมุดลอยบนสุด" onclick="window.heroWindow && window.heroWindow.togglePin()">📌</button>
+            <button class="hero-tbtn" id="btnDock" title="กลับไปมุมจอ" onclick="window.heroWindow && window.heroWindow.dockToCorner()">🧲</button>
+            <button class="hero-tbtn" id="btnMin" title="ย่อเป็นวิดเจ็ตจิ๋ว" onclick="window.heroWindow && window.heroWindow.enterMini()">▁</button>
+            <button class="hero-tbtn hero-tbtn-close" id="btnClose" title="ปิด (ยังทำงานอยู่ใน tray)" onclick="window.heroWindow && window.heroWindow.close()">✕</button>
+        </div>
+    </div>
+
+    <div class="floating-controls no-print">
+        <button onclick="openManualModal()" class="float-btn" style="color: var(--primary); border-color: var(--primary);">📖 คู่มือ</button>
+        <button onclick="openDrawerModal()" class="float-btn" style="color: #ea580c; border-color: #ea580c;">🧮 นับลิ้นชัก</button>
+        <button onclick="openExchangeModal()" class="float-btn" style="color: var(--purple);">💵 ขอแลกเงิน</button>
+        <button onclick="open6040Modal()" class="float-btn" style="color: var(--green60); border-color: var(--green60); font-weight: 700;">🇹🇭 60:40</button>
+        <button onclick="openReconModal()" class="float-btn" style="color: var(--cyan-recon); border-color: var(--cyan-recon); font-weight: 700;">📱 กระทบยอดโอน</button>
+        <button onclick="exportToExcel()" class="float-btn" style="color: green;">📥 Excel</button>
+        <button onclick="backupData()" class="float-btn" style="color: #0f766e; border-color: #0f766e;">💾 สำรองข้อมูล</button>
+        <button onclick="document.getElementById('restoreFile').click()" class="float-btn" style="color: #b45309; border-color: #b45309;">📂 กู้คืนข้อมูล</button>
+        <button onclick="printMain()" class="float-btn">🖨️ พิมพ์ (เต็ม)</button>
+        <button onclick="printSummaryOnly()" class="float-btn" style="color: #2563eb; font-weight: 800;">🎫 พิมพ์ปิดกะ</button>
+        <button onclick="resetAll()" class="float-btn" style="color: red;">↺ เริ่มใหม่</button>
+    </div>
+
+    <!-- เครื่อง POS หลัก -->
+    <div class="paper">
+        <div class="hero-rank-strip no-print">
+            <span class="hero-rank-badge">⚔️ <b>เควสประจำกะ</b></span>
+            <span class="hero-rank-sub">บันทึกทุกรายการ = เคลียร์เควส 1 ใบ</span>
+        </div>
+        <div class="header-layout">
+            <div class="row-split">
+                <div class="field-box">
+                    <span class="field-label">POS:</span>
+                    <input type="text" id="headPos" class="input-dotted" placeholder="01" onchange="saveHeader()">
+                </div>
+                <div class="field-box">
+                    <span class="field-label">วันที่:</span>
+                    <span id="headDate" style="font-weight: 600;">--/--/----</span>
+                </div>
+            </div>
+            <div class="row-split">
+                <div class="field-box" style="width: 100%;">
+                    <span class="field-label">แคชเชียร์:</span>
+                    <input type="text" id="headCashier" class="input-dotted w-full" placeholder="ชื่อพนักงาน" onchange="saveHeader()">
+                </div>
+            </div>
+        </div>
+
+        <div id="inputCard" class="input-card no-print">
+            <div class="type-selector-title">📌 เลือกประเภทการรับ/จ่ายเงิน:</div>
+
+            <div class="type-selector">
+                <label class="type-label lbl-transfer"><input type="radio" name="payType" value="transfer" checked onchange="handleTypeChange()"> 🏦 โอน</label>
+                <label class="type-label lbl-welfare"><input type="radio" name="payType" value="welfare" onchange="handleTypeChange()"> 💳 รัฐ(ปกติ)</label>
+                <label class="type-label lbl-thaiplus"><input type="radio" name="payType" value="thaiplus" onchange="handleTypeChange()"> 🇹🇭 ไทยพลัส</label>
+                <label class="type-label lbl-expense"><input type="radio" name="payType" value="expense" onchange="handleTypeChange()"> 💸 จ่าย</label>
+            </div>
+            <div class="input-row">
+                <input type="text" id="inputName" class="input-field" placeholder="ระบุรายการ..." style="display:none; flex: 2;">
+                <input type="number" id="inputAmount" class="input-field" placeholder="0" style="flex: 1; text-align: right; font-weight: bold;">
+            </div>
+            <button id="btnSave" onclick="saveRecord()" class="btn-save">⚔️ บันทึกรายการ</button>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-container no-print">
+            <div class="filter-tab active" id="tab-all" onclick="setFilter('all')">ทั้งหมด</div>
+            <div class="filter-tab" id="tab-transfer" onclick="setFilter('transfer')">โอน</div>
+            <div class="filter-tab" id="tab-welfare" onclick="setFilter('welfare')">บัตรรัฐ</div>
+            <div class="filter-tab" id="tab-thaiplus" onclick="setFilter('thaiplus')" style="color: var(--green60);">ไทยพลัส</div>
+            <div class="filter-tab" id="tab-expense" onclick="setFilter('expense')" style="color: var(--danger);">ค่าใช้จ่าย</div>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th style="width: 25px; text-align: center;">#</th><th>เวลา</th><th style="width: 45px; text-align: center;">ประเภท</th><th>รายการ</th><th style="text-align:right;">บาท</th><th class="no-print" style="text-align:center;"></th></tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="footer-stats">
+            <div class="sum-row"><span>ยอดเงินโอน</span> <span id="sumTransfer">0</span></div>
+            <div class="sum-row"><span>ยอดบัตร/รัฐ (ปกติ)</span> <span id="sumWelfare">0</span></div>
+            <div class="sum-row" style="color: var(--green60); font-weight: 600;"><span>ยอดไทยพลัส (60%)</span> <span id="sumThaiPlus">0</span></div>
+            <div class="sum-row" style="color: var(--danger);"><span>ค่าใช้จ่าย</span> <span id="sumExpense">0</span></div>
+            <div class="sum-row highlight"><span>สุทธิ (โอน+บัตร+ไทยพลัส)</span> <span id="sumNet">0</span></div>
+        </div>
+    </div>
+
+    <!-- MODAL กระทบยอดเงินดิจิทัล -->
+    <div id="reconModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color: var(--cyan-recon);">📱 กระทบยอดรับดิจิทัล</h3>
+                <button class="close-btn" onclick="closeReconModal()">×</button>
+            </div>
+            <div style="font-size: 12px; color: #666; text-align: center; margin-bottom: 10px;">นำยอดโอน/สแกน เทียบกับ ยอดที่เข้าบัญชีธนาคาร/เป๋าตังจริง</div>
+
+            <div class="drawer-summary" style="margin-top:0;">
+                <div style="font-weight:700; color:var(--dark); margin-bottom:10px; border-bottom:1px solid #ccc; padding-bottom:5px;">💻 ยอดรับโอนจากระบบ POS (ที่ควรมี)</div>
+                <div class="ds-row">
+                    <span>POS เครื่องที่ 1 (เงินโอน):</span>
+                    <input type="number" id="reconPos1Transfer" class="num-input" style="width:100px; text-align:right;" oninput="calcRecon()">
+                </div>
+                <div class="ds-row">
+                    <span>POS เครื่องที่ 2 (เงินโอน):</span>
+                    <input type="number" id="reconPos2" class="num-input" style="width:100px; text-align:right;" oninput="calcRecon()" placeholder="0">
+                </div>
+                <div class="ds-row" style="color:var(--cyan-recon); font-weight:700; margin-top:5px;">
+                    <span>รวมยอด POS ทั้งหมด:</span> <span id="reconPosTotal">0</span>
+                </div>
+            </div>
+
+            <div class="drawer-summary" style="margin-top:15px; background: #f0fdf4; border-color: #bbf7d0;">
+                <div style="font-weight:700; color:var(--success); margin-bottom:10px; border-bottom:1px solid #bbf7d0; padding-bottom:5px;">🏦 ยอดในบัญชีธนาคาร / เป๋าตัง (ที่เข้าจริง)</div>
+                <div class="ds-row">
+                    <span>ธนาคาร / บัญชีที่ 1:</span>
+                    <input type="number" id="reconBank1" class="num-input" style="width:100px; text-align:right; border-color:#bbf7d0;" oninput="calcRecon()" placeholder="0">
+                </div>
+                <div class="ds-row">
+                    <span>ธนาคาร / บัญชีที่ 2:</span>
+                    <input type="number" id="reconBank2" class="num-input" style="width:100px; text-align:right; border-color:#bbf7d0;" oninput="calcRecon()" placeholder="0">
+                </div>
+                <div class="ds-row">
+                    <span>แอปเป๋าตัง / ถุงเงิน:</span>
+                    <input type="number" id="reconPaotang" class="num-input" style="width:100px; text-align:right; border-color:#bbf7d0;" oninput="calcRecon()" placeholder="0">
+                </div>
+                <div class="ds-row" style="color:var(--success); font-weight:700; margin-top:5px;">
+                    <span>รวมยอดแอปทั้งหมด:</span> <span id="reconBankTotal">0</span>
+                </div>
+            </div>
+
+            <div class="drawer-summary" style="margin-top:15px; border-width: 2px;">
+                <div class="ds-total">
+                    <span>ผลการเปรียบเทียบ:</span>
+                </div>
+                <div id="reconDiffBox" class="ds-diff status-short" style="margin-top: 10px;">รอป้อนข้อมูล...</div>
+            </div>
+
+
+            <!-- Pushbullet Auto-Fill -->
+            <div class="pb-box">
+                <div style="font-weight:800; color: var(--purple); margin-bottom:8px; font-size:14px;">
+                    🔗 Pushbullet — ดักแจ้งเตือนอัตโนมัติ
+                </div>
+                <div style="font-size:11px; color:#666; margin-bottom:8px;">
+                    รองรับ: SCB, K PLUS, Krungsri, Bangkok Bank, TrueMoney, เป๋าตัง
+                </div>
+                <input type="password" id="pbToken" class="pb-token" placeholder="ใส่ Pushbullet Access Token (ขึ้นต้น o.)..." onchange="localStorage.setItem('pbToken',this.value)">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                    <span id="pbStatus" class="pb-status">⏸️ ยังไม่เชื่อมต่อ</span>
+                    <span style="font-size:10px; color:#aaa;">เชื่อมต่อเมื่อเปิดหน้านี้</span>
+                </div>
+                <div class="pb-btns">
+                    <button class="pb-btn" style="background: var(--purple);" onclick="connectPushbullet()">🟢 เชื่อมต่อ</button>
+                    <button class="pb-btn" style="background: #64748b;" onclick="disconnectPushbullet()">🔴 ตัดการเชื่อมต่อ</button>
+                </div>
+                <div id="pbLog"><div class="pb-i">รอการเชื่อมต่อ...</div></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:8px 0; font-size:12px; color:#444;">
+                    <input type="checkbox" id="pbToTable" checked style="cursor:pointer;">
+                    <label for="pbToTable" style="cursor:pointer;">✅ บันทึกลงตาราง POS อัตโนมัติ</label>
+                </div>
+                <div style="margin-top:10px; border-top:1px solid #e9d5ff; padding-top:10px;">
+                    <div style="font-weight:700; font-size:12px; color:var(--purple); margin-bottom:8px;">⚙️ ปรับแต่งการบันทึกอัตโนมัติ</div>
+                    <table style="width:100%; font-size:12px; border-collapse:collapse;">
+                        <thead><tr style="color:#666;"><th style="text-align:left; padding:4px;">แหล่งที่มา</th><th style="padding:4px;">ประเภท POS</th><th style="padding:4px; text-align:center;">กระทบยอด</th></tr></thead>
+                        <tbody>
+                            <tr><td style="padding:4px;">🏦 ธนาคาร</td><td style="padding:4px;"><select id="pbMapBank" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer">โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus">ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconBank" checked onchange="savePbConfig()"></td></tr>
+                            <tr><td style="padding:4px;">🇹🇭 เป๋าตัง</td><td style="padding:4px;"><select id="pbMapPaotang" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer">โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus" selected>ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconPaotang" onchange="savePbConfig()"></td></tr>
+                            <tr><td style="padding:4px;">💜 Mae Manee</td><td style="padding:4px;"><select id="pbMapMaemanee" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer" selected>โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus">ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconMaemanee" onchange="savePbConfig()"></td></tr>
+                            <tr><td style="padding:4px;">❓ ไม่รู้แหล่งที่มา</td><td style="padding:4px;"><select id="pbMapFallback" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer" selected>โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus">ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconFallback" checked onchange="savePbConfig()"></td></tr>
+                        </tbody>
+                    </table>
+                    <div style="font-size:10px; color:#888; margin-top:4px;">* กระทบยอด = ใส่ยอดเข้าช่องกระทบยอดโอนด้วย (แยกบัญชี 1/2/เป๋าตังตามแหล่งที่มา)</div>
+                </div>
+                <div class="hint-box" style="margin-top:8px; font-size:11px;">
+                    💡 วิธีใช้: ไปที่ pushbullet.com → Settings → Account → Create Access Token → เอามาใส่ช่องด้านบน
+                </div>
+                <div class="hint-box" style="margin-top:8px; font-size:11px; border-left-color: var(--danger);">
+                    ⚠️ กันพลาดยอด: มือถือต้องเปิดแอป Pushbullet ค้างไว้ + <b>ปิด "การจัดการแบตเตอรี่ / จำกัดพื้นหลัง"</b> (Battery optimization) สำหรับแอป Pushbullet ในมือถือด้วย ไม่งั้น Android จะฆ่าแอปทิ้งเงียบๆ เมื่อไม่ได้ใช้นาน ทำให้ mirror แจ้งเตือนธนาคารไม่ถูกส่งมาที่เครื่องนี้เลย
+                </div>
+            </div>
+
+            <button id="btnReconSubmit" class="btn-action" style="background: var(--cyan-recon);" onclick="executePrintRecon()" disabled>🖨️ พิมพ์ใบกระทบยอด</button>
+        </div>
+    </div>
+
+    <!-- MODAL นับเงินลิ้นชัก -->
+    <div id="drawerModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="color: #ea580c;">🧮 นับเงินในลิ้นชัก</h3><button class="close-btn" onclick="closeDrawerModal()">×</button></div>
+            <table class="table-grid"><thead><tr><th>ชนิดเงิน</th><th>จำนวน</th><th>รวมมูลค่า</th></tr></thead><tbody id="drawerTableBody"></tbody></table>
+            <div class="drawer-summary">
+                <div class="ds-row"><span>เงินทอนตั้งต้น:</span> <span style="font-weight:bold;">7,000</span></div>
+                <div class="ds-row" style="color: var(--success);"><span>บวก ยอดขายเงินสด:</span> <input type="number" id="dsCashSales" class="num-input" style="width: 90px; text-align: right;" placeholder="0" oninput="calcDrawer()"></div>
+                <div class="ds-row" style="color: var(--danger);"><span>หัก ค่าใช้จ่ายระหว่างวัน:</span> <span id="dsExpense">-0</span></div>
+                <div class="ds-row" style="color: var(--danger);"><span>หัก ยอดขายนอกบิล:</span> <input type="number" id="dsOffBill" class="num-input" style="width: 90px; text-align: right;" placeholder="0" oninput="calcDrawer()"></div>
+                <div class="ds-divider"></div>
+                <div class="ds-row" style="color: var(--primary);"><span>ยอดที่ควรมี:</span> <span id="dsExpected" style="font-weight:bold;">7,000</span></div>
+                <div class="ds-total"><span>ยอดที่นับได้จริง:</span> <span id="dsActual">0</span></div>
+                <div id="dsDiffBox" class="ds-diff status-short">รอการนับเงิน...</div>
+            </div>
+            <button id="btnDrSubmit" class="btn-action" style="background: #ea580c;" onclick="executePrintDrawer()" disabled>🖨️ พิมพ์ใบนับเงิน</button>
+        </div>
+    </div>
+
+    <!-- MODAL ขอแลกเงิน -->
+    <div id="exchangeModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3 style="color: var(--purple);">💵 ขอแลกเงิน</h3><button class="close-btn" onclick="closeExchangeModal()">×</button></div>
+            <table class="table-grid"><thead><tr><th style="width: 50%;">รายการเงินแลก</th><th style="width: 50%;">จำนวนบาท</th></tr></thead><tbody id="exchangeTableBody"></tbody><tfoot><tr><th style="text-align: right;">รวมเงินทั้งหมด:</th><th id="exTotalTxt" style="text-align: right; color: var(--purple); font-size: 18px;">0</th></tr></tfoot></table>
+            <button id="btnExSubmit" class="btn-action" style="background: var(--purple);" onclick="executePrintExchange()" disabled>🖨️ พิมพ์ใบแลกเงิน</button>
+        </div>
+    </div>
+
+    <!-- MODAL คู่มือการใช้งาน -->
+    <div id="manualModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3 style="color: var(--primary);">📖 คู่มือการใช้งานระบบ</h3><button class="close-btn" onclick="closeManualModal()">×</button></div><div class="manual-body"><p style="text-align:center; color:#666;">(ระบบทำงานปกติ)</p></div></div>
+    </div>
+
+    <!-- 🎨 MODAL เลือกธีมสี -->
+    <div id="themeModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 420px;">
+            <div class="modal-header"><h3 style="color: var(--hero-gold-bright);">🎨 เลือกธีมสี</h3><button class="close-btn" onclick="closeThemeModal()">×</button></div>
+            <div class="theme-grid" id="themeGrid">
+                <div class="theme-swatch" data-theme="amber" onclick="selectTheme('amber')">
+                    <div class="theme-swatch-preview theme-preview-amber"><span class="theme-swatch-check">✓</span></div>
+                    <div class="theme-swatch-label">ทอง-อำพัน</div>
+                </div>
+                <div class="theme-swatch" data-theme="emerald" onclick="selectTheme('emerald')">
+                    <div class="theme-swatch-preview theme-preview-emerald"><span class="theme-swatch-check">✓</span></div>
+                    <div class="theme-swatch-label">มรกตราตรี</div>
+                </div>
+                <div class="theme-swatch" data-theme="navy" onclick="selectTheme('navy')">
+                    <div class="theme-swatch-preview theme-preview-navy"><span class="theme-swatch-check">✓</span></div>
+                    <div class="theme-swatch-label">ราชานาวี</div>
+                </div>
+                <div class="theme-swatch" data-theme="ember" onclick="selectTheme('ember')">
+                    <div class="theme-swatch-preview theme-preview-ember"><span class="theme-swatch-check">✓</span></div>
+                    <div class="theme-swatch-label">เพลิงมังกร</div>
+                </div>
+                <div class="theme-swatch" data-theme="slate" onclick="selectTheme('slate')">
+                    <div class="theme-swatch-preview theme-preview-slate"><span class="theme-swatch-check">✓</span></div>
+                    <div class="theme-swatch-label">เทาเงาราตรี</div>
+                </div>
+            </div>
+
+            <!-- ขนาดตัวอักษรตอนพิมพ์ใบเสร็จ — ปรับได้เอง ไม่ต้องรอแก้โค้ด
+                 (renderer/base.css's --print-zoom, wired up in hero-chrome.js) -->
+            <div class="print-zoom-section">
+                <div class="print-zoom-title">🔠 ขนาดตัวอักษรใบเสร็จ</div>
+                <div class="print-zoom-row">
+                    <button class="print-zoom-btn" onclick="adjustPrintZoom(-0.1)">−</button>
+                    <span class="print-zoom-value" id="printZoomValue">100%</span>
+                    <button class="print-zoom-btn" onclick="adjustPrintZoom(0.1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✨ MODAL คำนวณ 60:40 -->
+    <div id="calc6040Modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="calc-hero">
+                <div class="calc-hero-inner">
+                    <div class="calc-hero-top"><div><h3>🇹🇭 ไทยช่วยไทย พลัส</h3><p>คำนวณสิทธิโครงการ 60:40</p></div><button class="close-btn" onclick="close6040Modal()">×</button></div>
+                    <div class="calc-ratio-pills"><span class="ratio-pill gov">รัฐจ่าย 60%</span><span class="ratio-pill cust">คุณจ่าย 40%</span></div>
+                    <div class="calc-info-strip"><div class="calc-info-item"><span class="ci-val">200฿</span><span class="ci-key">สูงสุด/วัน</span></div><div class="calc-info-item"><span class="ci-val">1,000฿</span><span class="ci-key">วงเงิน/เดือน</span></div></div>
+                </div>
+            </div>
+            <div class="calc-body">
+
+                <!-- ✨ NEW: ตัวเลือกโหมดคำนวณ -->
+                <div class="mode60-selector">
+                    <div class="mode60-tab active" id="m60-price" onclick="setMode60('price')"><span class="m60-ico">📦</span>จากราคาสินค้า</div>
+                    <div class="mode60-tab" id="m60-money" onclick="setMode60('money')"><span class="m60-ico">💰</span>มีเงินเท่านี้</div>
+                    <div class="mode60-tab" id="m60-topup" onclick="setMode60('topup')"><span class="m60-ico">➕</span>อยากได้ของ</div>
+                </div>
+
+                <!-- โหมด 1: ราคาสินค้า (เดิม) -->
+                <div class="mode60-field show" data-field="price">
+                    <div class="calc-input-label"><span>ราคาสินค้าทั้งหมด</span><span class="sub">กรอกตัวเลข</span></div>
+                    <div class="calc-input-wrap"><input type="number" id="c60Price" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
+                </div>
+
+                <!-- ✨ BAKA YUKE v2: โหมด 2: มีเงินเท่านี้ ซื้อได้สูงสุดเท่าไร -->
+                <!-- เปลี่ยนให้กรอก: เงินตัวเองในกระเป๋าตัง + ยอดเงินที่เหลือของผู้ใช้ (พช) -->
+                <div class="mode60-field" data-field="money">
+                    <div class="calc-input-label"><span>💰 เงินตัวเองในกระเป๋าตัง ( พช )</span><span class="sub">ยอดเงินที่เหลือของผู้ใช้</span></div>
+                    <div class="calc-input-wrap"><input type="number" id="c60Wallet" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
+                    <div class="chips-row"><span style="font-size:11px; color:#aaa; align-self:center;">เลือกเร็ว:</span><span class="chip60" onclick="setWallet60(50)">50฿</span><span class="chip60" onclick="setWallet60(80)">80฿</span><span class="chip60" onclick="setWallet60(100)">100฿</span><span class="chip60" onclick="setWallet60(133)">133฿</span><span class="chip60" onclick="setWallet60(200)">200฿</span></div>
+                    <!-- BAKA YUKE v2: แสดงยอดที่ต้องเติม พช ให้ชัดๆ -->
+                    <div class="big-answer topup" id="c60TopupInline" style="margin-top:12px; background: linear-gradient(135deg, #7c2d12, #9a3412);">
+                        <div class="ba-label">💳 ยอดที่ต้องเติมเข้า พช (กระเป๋าเงิน) ของลูกค้า</div>
+                        <div class="ba-value" id="c60TopupAmt" style="color:#fef08a;">0.00 ฿</div>
+                        <div class="ba-sub" id="c60TopupSub">กรอกเงินตัวเองในกระเป๋าตังก่อน</div>
+                    </div>
+                </div>
+
+                <!-- ✨ โหมด 3: อยากได้ของราคานี้ ต้องเติมเท่าไร -->
+                <div class="mode60-field" data-field="topup">
+                    <div class="calc-input-label"><span>ราคาสินค้าที่อยากได้</span><span class="sub">กรอกราคาเต็ม</span></div>
+                    <div class="calc-input-wrap"><input type="number" id="c60WantPrice" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
+                    <div class="calc-input-label"><span>เงินตัวเองในเป๋าตังตอนนี้</span><span class="sub">ยอดที่มีอยู่</span></div>
+                    <div class="calc-input-wrap"><input type="number" id="c60HavePrice" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
+                </div>
+
+                <!-- BAKA YUKE v2: เปลี่ยน label เป็น 'ยอดเงินที่เหลือของผู้ใช้' + ช่องกรอก -->
+                <div class="calc-input-label"><span>💳 ยอดเงินที่เหลือของผู้ใช้ ( พช )</span><span class="sub">ดูจากแอปเป๋าตัง → ยอดคงเหลือ</span></div>
+                <div class="calc-input-wrap"><input type="number" id="c60Remaining" inputmode="decimal" placeholder="0" min="0" max="200" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
+                <!-- ซ่อนช่อง c60Used ไว้ แต่คำนวณจาก c60Remaining อัตโนมัติ -->
+                <input type="hidden" id="c60Used">
+
+                <!-- BAKA YUKE v2: เปลี่ยน label เป็น 'รัฐช่วยไปแล้ว' + 'สิทธิคงเหลือ' ชัดขึ้น -->
+                <div class="quota-bar-wrap"><div class="quota-bar-header"><span>รัฐช่วยไปแล้ว: <strong id="c60UsedLbl">0</strong> ฿</span><span class="qrem" id="c60RemLbl">สิทธิคงเหลือ 200 ฿</span></div><div class="bar-track-sm"><div class="bar-fill-sm" id="c60Bar" style="width:0%"></div></div></div>
+                <!-- BAKA YUKE v2: เปลี่ยน chips ให้ตั้งค่ายอดคงเหลือ (200 - used) แทน -->
+                <div class="chips-row"><span style="font-size:11px; color:#aaa; align-self:center;">เลือกเร็ว:</span><span class="chip60" onclick="setRemaining60(200)">ยังไม่ได้ใช้</span><span class="chip60" onclick="setRemaining60(150)">เหลือ 150฿</span><span class="chip60" onclick="setRemaining60(100)">เหลือ 100฿</span><span class="chip60" onclick="setRemaining60(50)">เหลือ 50฿</span><span class="chip60" onclick="setRemaining60(0)">หมดแล้ว</span></div>
+                <div class="alert60" id="c60Alert"><span id="c60AlertIcon" style="font-size:15px; flex-shrink:0; margin-top:1px;"></span><span id="c60AlertMsg"></span></div>
+
+                <!-- ✨ BAKA YUKE v2: กล่องคำตอบใหญ่ โหมด "มีเงินเท่านี้" -- แสดงว่าซื้อได้สูงสุด -->
+                <div class="big-answer mode60-field" data-field="money" id="c60MoneyBox">
+                    <div class="ba-label">🛒 ซื้อของได้สูงสุด</div>
+                    <div class="ba-value" id="c60MaxBuy">0.00 ฿</div>
+                    <div class="ba-sub" id="c60MoneySub"></div>
+                </div>
+
+                <!-- ✨ กล่องคำตอบใหญ่: โหมด "อยากได้ของ" -->
+                <div class="big-answer topup mode60-field" data-field="topup" id="c60TopupBox">
+                    <div class="ba-label">➕ ต้องเติมเงินเข้าเป๋าตังอีก</div>
+                    <div class="ba-value" id="c60TopupAmt2">0.00 ฿</div>
+                    <div class="ba-sub" id="c60TopupSub2"></div>
+                </div>
+
+                <div class="calc-result-panel">
+                    <div class="calc-result-top">
+                        <div><div class="label" style="color:#fef08a; font-weight:600; font-size:13px;">📲 ยอดที่ต้องเติม / สแกนจ่าย</div><div class="big-amt" id="c60CustPay">0.00 ฿</div></div>
+                        <div><div class="after-label">สิทธิเหลือหลังซื้อ</div><div class="after-amt" id="c60RemAfter">200 ฿</div></div>
+                    </div>
+                    <div class="calc-result-rows">
+                        <div class="crr"><div class="crr-left"><div class="crr-dot d-price"></div><div class="crr-label">ราคาสินค้าเต็ม</div></div><div class="crr-amt" id="c60RPrice">0.00 ฿</div></div>
+                        <div class="crr"><div class="crr-left"><div class="crr-dot d-gov"></div><div><div class="crr-label">รัฐช่วยจ่าย (60%)</div><div class="crr-sub" id="c60GovNote"></div></div></div><div class="crr-amt c-gov" id="c60RGov">0.00 ฿</div></div>
+                        <div class="crr"><div class="crr-left"><div class="crr-dot d-cust"></div><div class="crr-label">ลูกค้าจ่ายเอง (40%)</div></div><div class="crr-amt c-cust" id="c60RCust">0.00 ฿</div></div>
+                        <!-- BAKA YUKE: แสดงยอดที่ต้องเติมเข้า พช (กระเป๋าเงิน) ของลูกค้า -->
+                        <div class="crr" style="background:#fffbeb; margin:0 -14px; padding:8px 14px;"><div class="crr-left"><div class="crr-dot" style="background:#f59e0b;"></div><div class="crr-label" style="font-weight:700; color:#92400e;">💳 ต้องเติมเข้า พช (กระเป๋าเงิน)</div></div><div class="crr-amt" id="c60TopupPanel" style="color:#92400e; font-size:16px;">0.00 ฿</div></div>
+                    </div>
+                </div>
+                <div class="toggle-section">
+                    <div class="toggle-head" id="eg60Head" onclick="toggleEg60()">
+                        <span>📊 ตัวอย่างการคำนวณ</span><span class="arrow">▾</span>
+                    </div>
+                    <div class="toggle-body" id="eg60Body">
+                        <table class="eg60-table">
+                            <thead><tr><th>ราคาสินค้า</th><th>รัฐจ่าย</th><th>คุณจ่าย</th></tr></thead>
+                            <tbody>
+                                <tr><td>50 ฿</td><td class="g">30 ฿</td><td class="r">20 ฿</td></tr>
+                                <tr><td>100 ฿</td><td class="g">60 ฿</td><td class="r">40 ฿</td></tr>
+                                <tr><td>200 ฿</td><td class="g">120 ฿</td><td class="r">80 ฿</td></tr>
+                                <tr><td>333 ฿</td><td class="g">200 ฿ ⚠️</td><td class="r">133 ฿</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <button id="btnSave6040" class="btn-save-60" onclick="apply6040ToPOS()" disabled>📥 แยกลง POS อัตโนมัติ</button>
+                <button class="btn-cancel-60" onclick="close6040Modal()">✕ ปิด (ไม่บันทึก)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT AREA: สรุปกระทบยอดโอน -->
+    <div id="printReconArea">
+        <div class="slip-title">สรุปกระทบยอดรับดิจิทัล</div>
+        <div class="slip-header">
+            <div>วันที่: <span id="slipRcDate"></span> เวลา: <span id="slipRcTime"></span></div>
+            <div>ผู้ตรวจสอบ: <span id="slipRcCashier" style="font-weight: bold;"></span></div>
+        </div>
+        <div class="slip-summary-box">
+            <div style="font-size: 14px; font-weight: normal; margin-bottom: 5px;">ยอดโอนจากระบบ POS (ที่ควรมี)</div>
+            <div class="slip-summary-row"><span>- POS 1 (เงินโอน):</span> <span id="slipRcPos1Transfer">0</span></div>
+            <div class="slip-summary-row"><span>- POS 2 (เงินโอน):</span> <span id="slipRcPos2">0</span></div>
+            <div class="slip-summary-row" style="border-bottom: 1px dotted #000; padding-bottom: 8px;"><span>รวมยอด POS ทั้งหมด:</span> <span id="slipRcPosTotal">0</span></div>
+
+            <div style="font-size: 14px; font-weight: normal; margin-top: 15px; margin-bottom: 5px;">ยอดในบัญชีธนาคาร / เป๋าตัง (เข้าจริง)</div>
+            <div class="slip-summary-row"><span>- บัญชีที่ 1:</span> <span id="slipRcBank1">0</span></div>
+            <div class="slip-summary-row"><span>- บัญชีที่ 2:</span> <span id="slipRcBank2">0</span></div>
+            <div class="slip-summary-row"><span>- แอปเป๋าตัง/ถุงเงิน:</span> <span id="slipRcPaotang">0</span></div>
+            <div class="slip-summary-row" style="border-bottom: 1px dotted #000; padding-bottom: 8px;"><span>รวมยอดรับทั้งหมด:</span> <span id="slipRcBankTotal">0</span></div>
+
+            <div class="slip-summary-row" style="margin-top: 15px; font-size: 16px;">
+                <span>ผลการเปรียบเทียบ:</span>
+            </div>
+            <div style="text-align: center; font-size: 18px; margin-top: 5px;" id="slipRcDiff"></div>
+        </div>
+        <div class="slip-footer-sig">ผู้ตรวจสอบ ......................................</div>
+    </div>
+
+    <!-- PRINT AREA: สรุปปิดกะ (Z-Report) -->
+    <div id="printSummaryArea">
+        <div class="slip-title">สรุปยอดขายปิดกะ (Z-Report)</div>
+        <div class="slip-header">
+            <div>วันที่: <span id="slipSumDate"></span> เวลา: <span id="slipSumTime"></span></div>
+            <div>POS: <span id="slipSumPos" style="font-weight: bold;"></span> | แคชเชียร์: <span id="slipSumCashier" style="font-weight: bold;"></span></div>
+        </div>
+        <div style="font-size: 14px; text-align: center; margin-bottom: 10px;">รายการอัปเดตล่าสุด <span id="slipSumCount">0</span> รายการ</div>
+        <div class="slip-summary-box">
+            <div class="slip-summary-row"><span>ยอดเงินโอน:</span> <span id="slipSumTransfer">0</span></div>
+            <div class="slip-summary-row"><span>ยอดบัตร/รัฐ (ปกติ):</span> <span id="slipSumWelfare">0</span></div>
+            <div class="slip-summary-row"><span>ยอดไทยพลัส (60%):</span> <span id="slipSumThaiplus">0</span></div>
+            <div class="slip-summary-row" style="margin-top: 10px; border-top: 1px dotted #000; padding-top: 10px;">
+                <span>สุทธิ (โอน+บัตร+ไทยพลัส):</span> <span id="slipSumNet" style="font-size: 18px;">0</span>
+            </div>
+            <div class="slip-summary-row" style="margin-top: 15px; font-size: 14px; font-weight: normal;"><span>หัก ค่าใช้จ่าย:</span> <span id="slipSumExpense">0</span></div>
+        </div>
+        <div class="slip-footer-sig">ผู้ตรวจสอบ ......................................</div>
+    </div>
+
+    <!-- PRINT AREA: ลิ้นชัก และ แลกเงิน -->
+    <div id="printDrawerArea"><div class="slip-title">นับเงินในลิ้นชัก</div><div class="slip-header"><div>วันที่: <span id="slipDrDate"></span> เวลา: <span id="slipDrTime"></span></div><div>แคชเชียร์: <span id="slipDrCashier" style="font-weight: bold;"></span></div></div><table class="slip-table"><thead><tr><th>ชนิดเงิน</th><th>จำนวน</th><th>มูลค่า</th></tr></thead><tbody id="slipDrBody"></tbody></table><div class="slip-summary-box"><div class="slip-summary-row"><span>ยอดขายเงินสด:</span> <span id="slipDrSales">0</span></div><div class="slip-summary-row" style="color: #666; font-size: 12px;"><span>หัก ค่าใช้จ่าย:</span> <span id="slipDrExpense">-0</span></div><div class="slip-summary-row" style="color: #666; font-size: 12px;"><span>หัก ยอดขายนอกบิล:</span> <span id="slipDrOffBill">-0</span></div><div class="slip-summary-row" style="margin-top: 5px; border-top: 1px dotted #ccc; padding-top: 5px;"><span>ยอดที่ควรมี:</span> <span id="slipDrExpected">0</span></div><div class="slip-summary-row"><span>ยอดที่นับได้:</span> <span id="slipDrActual">0</span></div><div class="slip-summary-row" style="margin-top:5px; border-top:1px dotted #000; padding-top:5px;"><span>ผลการนับ:</span> <span id="slipDrDiff"></span></div></div><div class="slip-footer-sig">ผู้ตรวจสอบ ......................................</div></div>
+    <div id="printExchangeArea"><div class="slip-title">ขอแลกเงิน</div><div class="slip-header"><div>วันที่: <span id="slipExDate"></span> เวลา: <span id="slipExTime"></span></div><div>แคชเชียร์: <span id="slipExCashier" style="font-weight: bold;"></span></div></div><table class="slip-table"><thead><tr><th>รายการเงินแลก</th><th>จำนวนบาท</th></tr></thead><tbody id="slipExBody"></tbody></table><div class="slip-summary-box" style="text-align: center;">รวมเงินทั้งหมด: <span id="slipExTotalVal">0</span> บาท</div><div class="slip-footer-sig">ผู้รับเงิน ......................................</div></div>
+
+    <!-- ✨ v5: Undo Toast + Restore file input -->
+    <div id="undoToast" class="undo-toast no-print"><span id="undoToastMsg">ลบรายการแล้ว</span><button onclick="undoDelete()">↩️ กู้คืน</button></div>
+    <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreData(event)">
+
+    <!-- JAVASCRIPT CORE (unchanged logic from thai-pos-system) -->
+    <script src="app.js"></script>
+    <!-- Hero chrome wiring (titlebar pin state only — no gameplay logic) -->
+    <script src="hero-chrome.js"></script>
+</body>
+</html>

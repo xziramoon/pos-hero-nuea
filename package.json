@@ -1,0 +1,51 @@
+{
+  "name": "taskbar-pos-hero-nuea",
+  "productName": "POS Hero เหนือ",
+  "version": "1.0.0",
+  "description": "Thai POS reconciliation tool, reskinned as a taskbar-docked hero widget (inspired by TBH: Task Bar Hero) — ร้านเหนือ variant",
+  "main": "main.js",
+  "author": "xziramoon",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xziramoon/pos-hero-nuea.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "release": "electron-builder --publish always"
+  },
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.xziramoon.poshero.nuea",
+    "productName": "POS Hero เหนือ",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "build/icon.ico",
+      "build/tray.png",
+      "build/raw-print.ps1"
+    ],
+    "asarUnpack": [
+      "build/raw-print.ps1"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "xziramoon",
+      "repo": "pos-hero-nuea"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
+}

@@ -1,0 +1,913 @@
+/* =========================================================================
+   POS HERO — pixel/RPG reskin layered on top of base.css (thai-pos.css).
+   Pure visual theme: no business logic here. Scoped to @media screen so
+   the original print stylesheet in base.css always wins when printing.
+   ========================================================================= */
+
+@font-face {
+    font-family: 'Press Start 2P';
+    src: url('assets/fonts/PressStart2P.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'VT323';
+    src: url('assets/fonts/VT323.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@media screen {
+
+    :root {
+        /* structural — "ทอง-อำพัน" (Amber), the default theme. Warm neutral
+           dark brown/black, no purple/blue tint anywhere (including the
+           dim/faint text shades, which used to lean lavender). */
+        --hero-bg-1: #120d09;
+        --hero-bg-2: #1c140c;
+        --hero-panel: #241a10;
+        --hero-panel-2: #1a130b;
+        --hero-panel-3: #140e08;
+        --hero-border-lt: #ffe27a;
+        --hero-border-dk: #6b4a12;
+        --hero-gold: #f6c453;
+        --hero-gold-bright: #ffe27a;
+        --hero-text: #f1e9d2;
+        --hero-text-dim: #d3c3a0;
+        --hero-text-faint: #a08f6c;
+        --hero-active-1: #b45309;
+        --hero-active-2: #f59e0b;
+        --hero-glow: rgba(246, 196, 83, 0.35);
+        --hero-radial-1: rgba(217, 154, 27, 0.22);
+        --hero-radial-2: rgba(246, 196, 83, 0.10);
+
+        /* brighten the original semantic accents so they read on a dark panel */
+        --primary: #60a5fa;
+        --success: #34d399;
+        --info: #38bdf8;
+        --danger: #f87171;
+        --warning: #fbbf24;
+        --purple: #d97706;
+        --green60: #4ade80;
+        --green60-bg: rgba(74, 222, 128, 0.14);
+        --green60-light: rgba(74, 222, 128, 0.4);
+        --red60: #f87171;
+        --red60-bg: rgba(248, 113, 113, 0.14);
+        --amber60: #fbbf24;
+        --amber60-bg: rgba(251, 191, 36, 0.14);
+        --cyan-recon: #22d3ee;
+        --cyan-recon-bg: rgba(34, 211, 238, 0.14);
+
+        /* Must match MINI_WIDTH/MINI_HEIGHT in main.js exactly — the mini-mode
+           collapse animation relies on #miniWidget's on-screen rect being
+           byte-identical before and after the native window resize, so any
+           drift here shows up as a 1px+ jump at the cut. No build step ties
+           these together, so they have to be kept in sync by hand. */
+        --mini-w: 210px;
+        --mini-h: 86px;
+
+        /* Mode-transition easings — shared by the enter/exit mini-mode
+           animation chain below. Named by feel, not by which element uses
+           them, since several elements share the same curve. */
+        --ease-mode-out: cubic-bezier(0.4, 0, 1, 0.5);      /* accelerate away */
+        --ease-mode-shutter: cubic-bezier(0.33, 0, 0.15, 1); /* fast start, firm stop */
+        --ease-mode-in: cubic-bezier(0.22, 1.2, 0.36, 1);    /* back-out overshoot */
+        --ease-hud-land: cubic-bezier(0.34, 1.56, 0.64, 1);  /* stronger back-out */
+    }
+
+    /* ===== "มรกตราตรี" (Emerald Night) ===== */
+    :root[data-theme="emerald"] {
+        --hero-bg-1: #071410; --hero-bg-2: #0e211a;
+        --hero-panel: #10241c; --hero-panel-2: #0b1a14; --hero-panel-3: #08140f;
+        --hero-border-lt: #7ce3b8; --hero-border-dk: #1f5c46;
+        --hero-gold: #34d399; --hero-gold-bright: #6ee7b7;
+        --hero-text: #eafff4; --hero-text-dim: #b7e6cf; --hero-text-faint: #7fb79e;
+        --hero-active-1: #0f766e; --hero-active-2: #14b8a6;
+        --hero-glow: rgba(52, 211, 153, 0.35);
+        --hero-radial-1: rgba(20, 184, 166, 0.22); --hero-radial-2: rgba(110, 231, 183, 0.10);
+        --primary: #38bdf8; --success: #34d399; --info: #22d3ee; --danger: #f87171; --warning: #fbbf24; --purple: #14b8a6;
+        --green60: #4ade80; --green60-bg: rgba(74,222,128,0.14); --green60-light: rgba(74,222,128,0.4);
+        --red60: #f87171; --red60-bg: rgba(248,113,113,0.14);
+        --amber60: #fbbf24; --amber60-bg: rgba(251,191,36,0.14);
+        --cyan-recon: #22d3ee; --cyan-recon-bg: rgba(34,211,238,0.14);
+    }
+
+    /* ===== "ราชานาวี" (Royal Navy Blue) ===== */
+    :root[data-theme="navy"] {
+        --hero-bg-1: #060b18; --hero-bg-2: #0c1830;
+        --hero-panel: #101f3d; --hero-panel-2: #0a1628; --hero-panel-3: #081120;
+        --hero-border-lt: #8ec5ff; --hero-border-dk: #1e3a6b;
+        --hero-gold: #60a5fa; --hero-gold-bright: #93c5fd;
+        --hero-text: #eaf2ff; --hero-text-dim: #b9cfee; --hero-text-faint: #7f97c2;
+        --hero-active-1: #1d4ed8; --hero-active-2: #3b82f6;
+        --hero-glow: rgba(59, 130, 246, 0.35);
+        --hero-radial-1: rgba(37, 99, 235, 0.22); --hero-radial-2: rgba(147, 197, 253, 0.10);
+        --primary: #60a5fa; --success: #34d399; --info: #38bdf8; --danger: #f87171; --warning: #fbbf24; --purple: #3b82f6;
+        --green60: #4ade80; --green60-bg: rgba(74,222,128,0.14); --green60-light: rgba(74,222,128,0.4);
+        --red60: #f87171; --red60-bg: rgba(248,113,113,0.14);
+        --amber60: #fbbf24; --amber60-bg: rgba(251,191,36,0.14);
+        --cyan-recon: #22d3ee; --cyan-recon-bg: rgba(34,211,238,0.14);
+    }
+
+    /* ===== "เพลิงมังกร" (Dragon Ember) ===== */
+    :root[data-theme="ember"] {
+        --hero-bg-1: #170805; --hero-bg-2: #24100a;
+        --hero-panel: #2a130c; --hero-panel-2: #1c0d08; --hero-panel-3: #150a06;
+        --hero-border-lt: #ffb37a; --hero-border-dk: #7c2d12;
+        --hero-gold: #fb923c; --hero-gold-bright: #fdba74;
+        --hero-text: #fff1e8; --hero-text-dim: #f0c8ab; --hero-text-faint: #bd8a68;
+        --hero-active-1: #b91c1c; --hero-active-2: #ef4444;
+        --hero-glow: rgba(251, 146, 60, 0.35);
+        --hero-radial-1: rgba(194, 65, 12, 0.22); --hero-radial-2: rgba(253, 186, 116, 0.10);
+        --primary: #fb923c; --success: #34d399; --info: #38bdf8; --danger: #ef4444; --warning: #fbbf24; --purple: #ef4444;
+        --green60: #4ade80; --green60-bg: rgba(74,222,128,0.14); --green60-light: rgba(74,222,128,0.4);
+        --red60: #f87171; --red60-bg: rgba(248,113,113,0.14);
+        --amber60: #fbbf24; --amber60-bg: rgba(251,191,36,0.14);
+        --cyan-recon: #22d3ee; --cyan-recon-bg: rgba(34,211,238,0.14);
+    }
+
+    /* ===== "เทาเงาราตรี" (Neutral Slate) — calmest, least saturated ===== */
+    :root[data-theme="slate"] {
+        --hero-bg-1: #0b0d10; --hero-bg-2: #14171b;
+        --hero-panel: #171a1f; --hero-panel-2: #101215; --hero-panel-3: #0c0e10;
+        --hero-border-lt: #c9ced6; --hero-border-dk: #454b54;
+        --hero-gold: #cbd5e1; --hero-gold-bright: #e2e8f0;
+        --hero-text: #f1f5f9; --hero-text-dim: #cbd5e1; --hero-text-faint: #8792a2;
+        --hero-active-1: #475569; --hero-active-2: #64748b;
+        --hero-glow: rgba(148, 163, 184, 0.35);
+        --hero-radial-1: rgba(100, 116, 139, 0.20); --hero-radial-2: rgba(226, 232, 240, 0.08);
+        --primary: #60a5fa; --success: #34d399; --info: #38bdf8; --danger: #f87171; --warning: #fbbf24; --purple: #64748b;
+        --green60: #4ade80; --green60-bg: rgba(74,222,128,0.14); --green60-light: rgba(74,222,128,0.4);
+        --red60: #f87171; --red60-bg: rgba(248,113,113,0.14);
+        --amber60: #fbbf24; --amber60-bg: rgba(251,191,36,0.14);
+        --cyan-recon: #22d3ee; --cyan-recon-bg: rgba(34,211,238,0.14);
+    }
+
+    html, body { height: 100%; }
+
+    body {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background:
+            radial-gradient(circle at 15% 0%, var(--hero-radial-1), transparent 45%),
+            radial-gradient(circle at 100% 100%, var(--hero-radial-2), transparent 40%),
+            linear-gradient(180deg, var(--hero-bg-1), var(--hero-bg-2));
+        color: var(--hero-text);
+        font-family: 'Sarabun', 'Noto Sans Thai', Tahoma, sans-serif;
+    }
+
+    body::-webkit-scrollbar { width: 10px; }
+    body::-webkit-scrollbar-track { background: var(--hero-bg-1); }
+    body::-webkit-scrollbar-thumb { background: var(--hero-border-dk); border: 2px solid var(--hero-bg-1); border-radius: 8px; }
+    body::-webkit-scrollbar-thumb:hover { background: var(--hero-gold); }
+
+    /* ---------------------------------------------------------------
+       Frameless window titlebar
+       --------------------------------------------------------------- */
+    .hero-titlebar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 36px;
+        padding: 0 6px 0 10px;
+        background: linear-gradient(180deg, #241a44, #150e28);
+        border-bottom: 2px solid var(--hero-border-dk);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .hero-titlebar-drag {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+        flex: 1;
+        min-width: 0;
+        -webkit-app-region: drag;
+    }
+    .hero-coin {
+        font-size: 15px;
+        filter: drop-shadow(0 0 4px rgba(246,196,83,0.7));
+        -webkit-app-region: drag;
+    }
+    .hero-title-text {
+        font-family: 'Press Start 2P', monospace;
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--hero-gold-bright);
+        text-shadow: 0 0 8px rgba(246,196,83,0.5);
+        white-space: nowrap;
+    }
+    .hero-subtitle {
+        font-size: 9px;
+        color: var(--hero-text-faint);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        letter-spacing: 0.5px;
+    }
+    .hero-titlebar-btns {
+        display: flex;
+        gap: 4px;
+        -webkit-app-region: no-drag;
+        flex-shrink: 0;
+    }
+    .hero-tbtn {
+        width: 26px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        line-height: 1;
+        cursor: pointer;
+        color: var(--hero-text);
+        background: var(--hero-panel-2);
+        border-style: solid;
+        border-width: 2px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        border-radius: 2px;
+        box-sizing: border-box;
+    }
+    .hero-tbtn:hover { filter: brightness(1.25); }
+    .hero-tbtn:active {
+        border-color: var(--hero-border-dk) var(--hero-border-lt) var(--hero-border-lt) var(--hero-border-dk);
+        transform: translate(1px, 1px);
+    }
+    .hero-tbtn#btnPin.is-pinned {
+        background: linear-gradient(180deg, var(--hero-active-2), var(--hero-active-1));
+        box-shadow: 0 0 8px rgba(245,158,11,0.8);
+    }
+    .hero-tbtn-close:hover {
+        background: #7f1d1d;
+        border-color: #fca5a5 #450a0a #450a0a #fca5a5;
+    }
+
+    /* ---------------------------------------------------------------
+       Quest strip (decorative only)
+       --------------------------------------------------------------- */
+    .hero-rank-strip {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 7px 10px;
+        background: linear-gradient(90deg, rgba(217,154,27,0.22), rgba(246,196,83,0.10));
+        border: 1px solid var(--hero-border-dk);
+        border-radius: 4px;
+        flex-wrap: wrap;
+    }
+    .hero-rank-badge { font-size: 12px; color: var(--hero-gold-bright); white-space: nowrap; }
+    .hero-rank-sub { font-size: 10px; color: var(--hero-text-faint); white-space: nowrap; }
+
+    /* ---------------------------------------------------------------
+       Main panel ("quest ledger")
+       --------------------------------------------------------------- */
+    .paper {
+        background: linear-gradient(180deg, var(--hero-panel), var(--hero-panel-2));
+        width: calc(100% - 16px);
+        max-width: 480px;
+        margin: 10px auto 96px;
+        padding: 16px;
+        border-radius: 6px;
+        border-style: solid;
+        border-width: 3px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        border-top-width: 3px;
+        box-shadow: 0 0 0 1px #000, 0 14px 34px rgba(0,0,0,0.55), 0 0 24px rgba(217,154,27,0.18);
+    }
+
+    .header-layout { border-bottom: 2px dashed var(--hero-border-dk); }
+    .field-label { color: var(--hero-gold); }
+    .input-dotted {
+        color: var(--hero-text) !important;
+        border-bottom: 1px dotted var(--hero-border-lt) !important;
+        background: transparent;
+    }
+    .input-dotted::placeholder { color: var(--hero-text-faint); }
+
+    .input-card {
+        background: var(--hero-panel-2);
+        border: 2px solid var(--hero-border-dk);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+    }
+    .type-selector-title { color: var(--hero-gold); }
+    .type-selector { background: var(--hero-panel-3); }
+    .type-label { color: var(--hero-text-dim); }
+    .type-label:hover { background: rgba(255,255,255,0.07); color: var(--hero-text); }
+
+    .input-field {
+        background: var(--hero-panel-3);
+        border: 2px solid var(--hero-border-dk);
+        color: var(--hero-text);
+    }
+    .input-field::placeholder { color: var(--hero-text-faint); }
+    .input-field:focus { border-color: var(--hero-gold); }
+
+    .btn-save {
+        background: linear-gradient(180deg, var(--hero-active-2), var(--hero-active-1)) !important;
+        border-style: solid; border-width: 2px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    }
+    .btn-save:active { transform: translateY(1px); }
+
+    .filter-tab { background: var(--hero-panel-2); color: var(--hero-text-dim); border: 1px solid var(--hero-border-dk); }
+    .filter-tab:hover { background: rgba(255,255,255,0.08); }
+    .filter-tab.active { background: linear-gradient(180deg, var(--hero-active-2), var(--hero-active-1)) !important; color: #fff !important; border-color: var(--hero-gold-bright) !important; }
+    .tab-count { background: rgba(255,255,255,0.15) !important; }
+    .filter-tab.active .tab-count { background: rgba(0,0,0,0.25) !important; }
+
+    .table-wrapper { border: 2px solid var(--hero-border-dk); border-radius: 6px; background: var(--hero-panel-3); }
+    th { background: var(--hero-panel-2) !important; color: var(--hero-gold) !important; border-bottom: 2px solid var(--hero-border-dk) !important; }
+    td { border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--hero-text); }
+    tr.row-transfer { background-color: rgba(74, 222, 128, 0.08) !important; }
+    tr.row-welfare { background-color: rgba(56, 189, 248, 0.08) !important; }
+    tr.row-thaiplus { background-color: rgba(246, 196, 83, 0.10) !important; }
+    tr.row-expense { background-color: rgba(248, 113, 113, 0.10) !important; }
+    .badge { box-shadow: 0 1px 0 rgba(0,0,0,0.4); text-shadow: 0 1px 1px rgba(0,0,0,0.5); }
+
+    .footer-stats { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); }
+    .sum-row.highlight { border-top: 1px dashed var(--hero-border-lt); }
+
+    /* ---------------------------------------------------------------
+       Bottom action bar — the "skill bar" (was a floating sidebar)
+       --------------------------------------------------------------- */
+    .floating-controls {
+        position: fixed;
+        top: auto !important;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        max-height: none;
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(0deg, #150e28 55%, rgba(21,14,40,0.0));
+        border-top: 2px solid var(--hero-border-dk);
+        box-shadow: 0 -6px 18px rgba(0,0,0,0.45);
+        z-index: 900;
+    }
+    .float-btn {
+        background: var(--hero-panel-2) !important;
+        border-style: solid !important;
+        border-width: 2px !important;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt) !important;
+        color: var(--hero-text) !important;
+        font-size: 11px;
+        padding: 7px 10px !important;
+        border-radius: 5px !important;
+        box-shadow: 0 2px 0 rgba(0,0,0,0.4) !important;
+    }
+    .float-btn:hover { filter: brightness(1.25); transform: none !important; }
+    .float-btn:active {
+        border-color: var(--hero-border-dk) var(--hero-border-lt) var(--hero-border-lt) var(--hero-border-dk) !important;
+        transform: translateY(1px) !important;
+    }
+
+    /* ---------------------------------------------------------------
+       Modals — dialog boxes
+       --------------------------------------------------------------- */
+    .modal-overlay { background: rgba(5, 2, 15, 0.78); }
+    .modal-content {
+        background: linear-gradient(180deg, var(--hero-panel), var(--hero-panel-2));
+        color: var(--hero-text);
+        border-style: solid;
+        border-width: 3px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        box-shadow: 0 0 0 1px #000, 0 20px 50px rgba(0,0,0,0.6);
+    }
+    .modal-header { border-bottom: 2px solid var(--hero-border-dk); }
+    .close-btn { color: var(--hero-text-faint); }
+    .close-btn:hover { color: var(--hero-text); }
+
+    .table-grid th, .table-grid td { border: 1px solid var(--hero-border-dk); }
+    .table-grid th { background: var(--hero-panel-3); color: var(--hero-gold); }
+    .num-input { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); color: var(--hero-text); }
+    .num-input:focus { border-color: var(--hero-gold); }
+    .val-display { color: var(--hero-text-dim); }
+
+    .drawer-summary { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); }
+    .ds-divider { border-top: 1px dashed var(--hero-border-dk); }
+    .status-ok { background: rgba(74,222,128,0.16) !important; color: #6ee7a8 !important; border: 1px solid rgba(74,222,128,0.4) !important; }
+    .status-short { background: rgba(248,113,113,0.16) !important; color: #fca5a5 !important; border: 1px solid rgba(248,113,113,0.4) !important; }
+    .status-over { background: rgba(251,191,36,0.16) !important; color: #fde68a !important; border: 1px solid rgba(251,191,36,0.4) !important; }
+    .btn-action:disabled { background: #3a3355 !important; color: var(--hero-text-faint) !important; }
+    .btn-save-60:disabled { background: #3a3355 !important; color: var(--hero-text-faint) !important; }
+
+    .manual-body { color: var(--hero-text-dim); }
+    .hint-box { background: rgba(251,191,36,0.12); border-left: 4px solid var(--warning); color: #fde68a; }
+
+    .acc-btn { background: var(--hero-panel-3); color: var(--primary); border: 1px solid var(--hero-border-dk); }
+    .acc-btn:hover { background: rgba(255,255,255,0.06); }
+    .acc-content { background: var(--hero-panel-2); border: 1px solid var(--hero-border-dk); border-top: none; color: var(--hero-text-dim); }
+
+    /* ---------------------------------------------------------------
+       60:40 boss-banner calculator
+       --------------------------------------------------------------- */
+    #calc6040Modal .modal-content { border-radius: 8px; overflow: hidden; }
+    .calc-hero {
+        background: linear-gradient(135deg, var(--hero-active-1) 0%, #78350f 55%, #171030 100%) !important;
+        border-bottom: 2px solid var(--hero-border-dk);
+    }
+    .btn-cancel-60 { background: var(--hero-panel-3) !important; color: var(--hero-text-dim) !important; }
+    .btn-cancel-60:hover { background: rgba(255,255,255,0.08) !important; color: var(--hero-text) !important; }
+
+    .calc-input-label span:first-child { color: var(--hero-text); }
+    .calc-input-label .sub { color: var(--hero-text-faint); }
+    .calc-input-wrap input[type="number"],
+    .calc-input-wrap input[type="text"] {
+        background: var(--hero-panel-3) !important;
+        border: 2px solid var(--hero-border-dk) !important;
+        color: var(--hero-gold-bright) !important;
+        font-family: 'VT323', monospace !important;
+        font-size: 24px !important;
+    }
+    .calc-input-wrap input:focus { border-color: var(--hero-gold) !important; box-shadow: 0 0 0 3px var(--hero-glow) !important; }
+    .calc-input-unit { color: var(--hero-text-faint); }
+
+    .quota-bar-header span { color: var(--hero-text-faint); }
+    .bar-track-sm { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); }
+    .bar-fill-sm { box-shadow: 0 0 8px rgba(74,222,128,0.6); }
+    .bar-fill-sm.low { box-shadow: 0 0 8px rgba(251,191,36,0.6); }
+    .bar-fill-sm.empty { box-shadow: 0 0 8px rgba(248,113,113,0.6); }
+
+    .chip60 { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); color: var(--hero-text-dim); }
+    .chip60:hover { background: rgba(74,222,128,0.14); border-color: rgba(74,222,128,0.4); color: var(--green60); }
+
+    .mode60-selector { background: var(--hero-panel-3); }
+    .mode60-tab { color: var(--hero-text-dim); }
+    .mode60-tab:hover { background: rgba(255,255,255,0.07); color: var(--hero-text); }
+    .mode60-tab.active { background: linear-gradient(180deg, var(--hero-active-2), var(--hero-active-1)) !important; color: #fff !important; box-shadow: 0 3px 10px -2px rgba(245,158,11,0.6) !important; }
+
+    .calc-result-panel {
+        background: linear-gradient(135deg, var(--hero-active-1) 0%, #78350f 100%) !important;
+        border: 1px solid var(--hero-border-dk);
+    }
+    .calc-result-rows { background: var(--hero-panel-3) !important; }
+    .crr { border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .crr-label { color: var(--hero-text-dim); }
+    .crr-sub { color: var(--hero-text-faint); }
+    .crr-amt { color: var(--hero-text) !important; font-family: 'VT323', monospace; font-size: 16px; }
+    .crr[style*="fffbeb"] { background: rgba(246,196,83,0.10) !important; }
+
+    .formula60 { background: var(--hero-panel-3); color: var(--hero-text-faint); }
+    .f60num { color: var(--hero-text-dim); }
+    .eg60-table th { color: var(--hero-text-faint); border-bottom: 1px solid var(--hero-border-dk); }
+    .eg60-table td { border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--hero-text-dim); }
+    .toggle-head { border-top: 1px solid var(--hero-border-dk); color: var(--hero-text-dim); }
+    .toggle-head .arrow { color: var(--hero-text-faint); }
+
+    /* numeric "HUD" readouts rendered in the retro terminal font */
+    #sumTransfer, #sumWelfare, #sumThaiPlus, #sumExpense, #sumNet,
+    .amt-editable, .val-display,
+    .ba-value, .big-amt, .after-amt,
+    #c60MaxBuy, #c60TopupAmt, #c60TopupAmt2, #c60CustPay,
+    #c60TopupPanel, #c60RPrice, #c60RGov, #c60RCust {
+        font-family: 'VT323', monospace;
+        letter-spacing: 0.5px;
+    }
+    #sumNet { font-size: 22px; }
+
+    /* ---------------------------------------------------------------
+       Pushbullet box — original stylesheet ships no rules for these
+       classes; give them a minimal dark skin so the recon modal
+       doesn't fall back to unstyled browser defaults.
+       --------------------------------------------------------------- */
+    .pb-box { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); border-radius: 8px; padding: 12px; margin-top: 15px; }
+    .pb-token { width: 100%; box-sizing: border-box; background: var(--hero-panel-2); border: 1px solid var(--hero-border-dk); color: var(--hero-text); border-radius: 6px; padding: 8px; font-family: 'Sarabun', sans-serif; }
+    .pb-status { font-size: 12px; color: var(--hero-text-dim); }
+    .pb-btns { display: flex; gap: 8px; margin-top: 8px; }
+    .pb-btn { flex: 1; border: none; color: #fff; padding: 8px; border-radius: 6px; cursor: pointer; font-family: 'Sarabun', sans-serif; font-weight: 600; }
+    .pb-btn:hover { filter: brightness(1.15); }
+    #pbLog { max-height: 110px; overflow-y: auto; background: var(--hero-panel-2); border: 1px solid var(--hero-border-dk); border-radius: 6px; padding: 6px 8px; margin-top: 8px; font-size: 11px; }
+    #pbLog .pb-i { color: var(--hero-text-faint); padding: 2px 0; }
+    #pbLog .pb-w { color: #fde68a; padding: 2px 0; }
+    #pbLog .pb-e { color: #fca5a5; padding: 2px 0; }
+
+    /* undo toast — keep dark, just tie the accent to the theme */
+    .undo-toast { border: 2px solid var(--hero-border-dk); }
+    .undo-toast button { background: var(--hero-gold) !important; }
+
+    /* ---------------------------------------------------------------
+       Mini widget — TBH-style tiny always-on-top HUD shown while the
+       window is "minimized" instead of vanishing to the tray.
+
+       The terminal (non-animating) state is a plain display:none/flex
+       swap on body.mini-mode, same as always — the .mode-anim rules
+       below only matter for the ~420-430ms transition in between, and
+       are always removed again once it lands. See main.js's
+       enterMiniMode/exitMiniMode + hero-chrome.js's mode-transition
+       handling for the JS side of this sequence.
+       --------------------------------------------------------------- */
+    body.mini-mode { overflow: hidden; }
+    body.mini-mode .hero-titlebar,
+    body.mini-mode .paper,
+    body.mini-mode .floating-controls,
+    body.mini-mode .modal-overlay {
+        display: none !important;
+    }
+
+    #miniWidget {
+        display: none;
+        position: fixed;
+        /* True final on-screen rect, not inset:0 — while the window is
+           still full-size mid-transition this is where the HUD will end
+           up, and once mini mode commits the window IS that rect, so the
+           coordinates are identical either side of the native resize.
+           That's what lets the resize cut land invisibly behind the
+           shutter instead of visibly moving anything. */
+        right: 0;
+        bottom: 0;
+        width: var(--mini-w);
+        height: var(--mini-h);
+        z-index: 4100;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        box-sizing: border-box;
+        cursor: pointer;
+        background: linear-gradient(135deg, var(--hero-panel), var(--hero-panel-2));
+        border-style: solid;
+        border-width: 3px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: none;
+    }
+    body.mini-mode #miniWidget,
+    body.mode-anim #miniWidget {
+        display: flex;
+    }
+    #miniWidget:hover { filter: brightness(1.18); }
+    #miniWidget:active { filter: brightness(0.95); }
+    /* Applied by hero-chrome.js only once real drag movement is detected
+       (a plain click never gets this class) — see main.js's
+       window:mini-drag-* handlers for why this is a custom JS drag instead
+       of -webkit-app-region:drag. */
+    #miniWidget.dragging { cursor: grabbing; filter: brightness(1.1); }
+
+    /* Full-viewport curtain that closes over the content right before the
+       native window resize fires, and opens again right after — the
+       resize itself always happens while this is fully opaque, so the
+       frame before/after the jump differs only in flat background. */
+    #modeShutter {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 4000;
+        background: var(--hero-bg-1);
+        pointer-events: none;
+        transform: translateY(-100%);
+    }
+    body.mode-anim #modeShutter { display: block; }
+
+    /* ---------------------------------------------------------------
+       Mode transition (enter/exit mini) — timings here are the source
+       of truth; main.js's COLLAPSE_MS (230ms) is tuned to match the
+       shutter-close delay+duration below, not the other way around.
+       --------------------------------------------------------------- */
+    body.mode-anim { overflow: hidden; }
+    body.mode-anim .hero-titlebar,
+    body.mode-anim .paper,
+    body.mode-anim .floating-controls {
+        pointer-events: none;
+        will-change: transform, opacity;
+    }
+
+    /* enter mini: chrome slides/scales out, shutter closes, HUD pops in —
+       all timed to land together right as main.js's resize commits */
+    body.mode-anim.to-mini .hero-titlebar { animation: hero-bar-out 150ms var(--ease-mode-out) both; }
+    body.mode-anim.to-mini .paper { animation: paper-out 170ms var(--ease-mode-out) both; }
+    body.mode-anim.to-mini .floating-controls { animation: float-out 150ms var(--ease-mode-out) both; }
+    body.mode-anim.to-mini #modeShutter { animation: shutter-close 190ms var(--ease-mode-shutter) 40ms both; }
+    body.mode-anim.to-mini #miniWidget { animation: hud-pop-in 120ms cubic-bezier(0.2, 0.9, 0.3, 1) 110ms both; }
+    /* higher specificity than the rule above on purpose — .land is added
+       by hero-chrome.js at the exact moment main.js's resize actually
+       commits (not a hardcoded delay), so it must win the cascade once
+       the pop-in has finished landing */
+    body.mode-anim.to-mini #miniWidget.land { animation: hud-land 190ms var(--ease-hud-land); }
+
+    /* exit mini: HUD blooms outward, shutter opens, chrome assembles back
+       in with a stagger (titlebar -> paper -> controls) so it reads as
+       "assembling" rather than a single fade.
+       Delays here are relative to when 'to-full' is added (i.e. when the
+       resize already committed, ~100ms into the overall click-to-full
+       sequence) — NOT relative to the click itself, since the press
+       feedback (#miniWidget.press, below) already covers that first
+       ~100ms on its own, independent of this class. */
+    body.mode-anim.to-full #modeShutter { animation: shutter-open 190ms var(--ease-mode-shutter) 50ms both; }
+    body.mode-anim.to-full #miniWidget { animation: hud-bloom-out 130ms ease-in 10ms both; }
+    body.mode-anim.to-full .hero-titlebar { animation: hero-bar-in 200ms var(--ease-mode-in) 70ms both; }
+    body.mode-anim.to-full .paper { animation: paper-in 220ms var(--ease-mode-in) 100ms both; }
+    body.mode-anim.to-full .floating-controls { animation: float-in 200ms var(--ease-mode-in) 140ms both; }
+
+    /* instant tactile ack on click, before anything else has started —
+       so the click never feels dropped even though the real resize is
+       deferred by ~100ms */
+    #miniWidget.press { animation: hud-press 100ms ease-out; }
+
+    @keyframes hero-bar-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-100%); } }
+    @keyframes hero-bar-in { from { opacity: 0; transform: translateY(-100%); } to { opacity: 1; transform: translateY(0); } }
+
+    @keyframes paper-out { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.92) translateY(12px); } }
+    @keyframes paper-in { from { opacity: 0; transform: scale(0.94) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    @keyframes float-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(130%); } }
+    @keyframes float-in { from { opacity: 0; transform: translateY(130%); } to { opacity: 1; transform: translateY(0); } }
+
+    @keyframes shutter-close { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+    @keyframes shutter-open { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+
+    @keyframes hud-pop-in { from { opacity: 0; transform: scale(0.7) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    @keyframes hud-land {
+        0%   { transform: scale(1); box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+        28%  { transform: scaleX(1.10) scaleY(0.86); box-shadow: 0 0 18px var(--hero-glow); }
+        100% { transform: scale(1); box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+    }
+
+    @keyframes hud-bloom-out { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(1.18); } }
+
+    @keyframes hud-press { 0% { transform: scale(1); } 50% { transform: scale(0.93); } 100% { transform: scale(1); } }
+
+    .mini-expand-hint {
+        position: absolute;
+        top: 3px;
+        right: 6px;
+        font-size: 11px;
+        color: var(--hero-text-faint);
+    }
+
+    /* ---------------------------------------------------------------
+       Pushbullet connection status LED — one glanceable dot for whether
+       the realtime auto-record socket is actually up, in both the full
+       titlebar and the mini HUD, kept in sync by renderer/app.js's
+       setPbStatus() (the same function that already drives #pbStatus'
+       text inside the reconciliation modal). Default (no state class) =
+       gray = idle/never connected this session.
+       --------------------------------------------------------------- */
+    .pb-led, .mini-pb-led {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #6b7280;
+        box-shadow: 0 0 4px rgba(107, 114, 128, 0.6);
+        flex-shrink: 0;
+    }
+    .pb-led.ok, .mini-pb-led.ok {
+        background: #22c55e;
+        box-shadow: 0 0 6px rgba(34, 197, 94, 0.9);
+        animation: pb-led-pulse 2s ease-in-out infinite;
+    }
+    .pb-led.warn, .mini-pb-led.warn {
+        background: #eab308;
+        box-shadow: 0 0 6px rgba(234, 179, 8, 0.9);
+        animation: pb-led-blink 1s steps(1) infinite;
+    }
+    .pb-led.err, .mini-pb-led.err {
+        background: #ef4444;
+        box-shadow: 0 0 6px rgba(239, 68, 68, 0.9);
+    }
+    @keyframes pb-led-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @keyframes pb-led-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.3; } }
+
+    .mini-pb-led {
+        position: absolute;
+        top: 5px;
+        left: 7px;
+        width: 7px;
+        height: 7px;
+    }
+
+    .mini-coin {
+        width: 40px;
+        height: 48px;
+        flex-shrink: 0;
+        background-image: url('assets/sprite-coin-run.png');
+        background-repeat: no-repeat;
+        background-size: 160px 48px;
+        image-rendering: pixelated;
+        animation: mini-coin-run 0.7s steps(4) infinite;
+        filter: drop-shadow(0 0 4px rgba(246, 196, 83, 0.5));
+    }
+    @keyframes mini-coin-run {
+        from { background-position: 0 0; }
+        to { background-position: -160px 0; }
+    }
+
+    .mini-info { min-width: 0; flex: 1; }
+    .mini-label {
+        font-size: 10px;
+        color: var(--hero-text-faint);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .mini-amount {
+        font-family: 'VT323', monospace;
+        font-size: 27px;
+        color: var(--hero-gold-bright);
+        line-height: 1.1;
+        text-shadow: 0 0 8px rgba(246, 196, 83, 0.45);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .mini-sub {
+        font-size: 10px;
+        color: var(--hero-text-dim);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 3px;
+    }
+
+    /* ---------------------------------------------------------------
+       Feedback animations — manual save vs. auto-detected money-in
+       --------------------------------------------------------------- */
+    .coin-pop {
+        position: fixed;
+        left: 50%;
+        top: 70px;
+        transform: translateX(-50%);
+        z-index: 5000;
+        pointer-events: none;
+        white-space: nowrap;
+        background: linear-gradient(180deg, var(--hero-panel), var(--hero-panel-2));
+        border-style: solid;
+        border-width: 2px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        border-radius: 6px;
+        padding: 6px 16px;
+        color: var(--hero-gold-bright);
+        font-family: 'VT323', monospace;
+        font-size: 22px;
+        text-shadow: 0 0 8px rgba(246, 196, 83, 0.6);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        animation: coin-pop-rise 1.1s ease-out forwards;
+    }
+    .coin-pop.money-in {
+        font-size: 26px;
+        border-color: var(--hero-active-2) var(--hero-active-1) var(--hero-active-1) var(--hero-active-2);
+        box-shadow: 0 8px 26px rgba(245, 158, 11, 0.5);
+        animation-duration: 1.7s;
+    }
+    @keyframes coin-pop-rise {
+        0%   { opacity: 0; top: 90px; }
+        12%  { opacity: 1; top: 58px; }
+        75%  { opacity: 1; top: 38px; }
+        100% { opacity: 0; top: 8px; }
+    }
+
+    tr.row-flash { animation: row-flash-glow 1.4s ease-out; }
+    @keyframes row-flash-glow {
+        0%   { box-shadow: inset 0 0 0 999px rgba(246, 196, 83, 0.35); }
+        100% { box-shadow: inset 0 0 0 999px rgba(246, 196, 83, 0); }
+    }
+
+    #sumNet { display: inline-block; }
+    #sumNet.sum-pulse { animation: sum-pulse-anim 0.6s ease-out; }
+    @keyframes sum-pulse-anim {
+        0%   { transform: scale(1);    text-shadow: 0 0 0 rgba(246, 196, 83, 0); }
+        35%  { transform: scale(1.18); text-shadow: 0 0 14px rgba(246, 196, 83, 0.85); }
+        100% { transform: scale(1);    text-shadow: 0 0 0 rgba(246, 196, 83, 0); }
+    }
+
+    .mini-coin.bump { animation: mini-coin-run 0.7s steps(4) infinite, mini-coin-bump 0.5s ease-out; }
+    @keyframes mini-coin-bump {
+        0%   { margin-top: 0; }
+        30%  { margin-top: -8px; }
+        60%  { margin-top: 2px; }
+        100% { margin-top: 0; }
+    }
+    .mini-amount.flash { animation: mini-amount-flash 0.7s ease-out; }
+    @keyframes mini-amount-flash {
+        0%   { color: #fff; text-shadow: 0 0 16px rgba(255, 255, 255, 0.95); }
+        100% { color: var(--hero-gold-bright); text-shadow: 0 0 8px rgba(246, 196, 83, 0.45); }
+    }
+
+    /* ---------------------------------------------------------------
+       Theme picker modal
+       --------------------------------------------------------------- */
+    .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+    .theme-swatch {
+        cursor: pointer;
+        text-align: center;
+        padding: 6px;
+        border-radius: 8px;
+        border: 2px solid transparent;
+    }
+    .theme-swatch:hover { background: rgba(255, 255, 255, 0.06); }
+    .theme-swatch.active { border-color: var(--hero-gold-bright); background: rgba(255, 255, 255, 0.08); }
+    .theme-swatch-preview {
+        position: relative;
+        height: 54px;
+        border-radius: 6px;
+        border-style: solid;
+        border-width: 2px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        margin-bottom: 6px;
+    }
+    .theme-swatch-check {
+        position: absolute;
+        top: 3px;
+        right: 4px;
+        font-size: 12px;
+        color: #fff;
+        text-shadow: 0 0 4px rgba(0,0,0,0.8);
+        opacity: 0;
+    }
+    .theme-swatch.active .theme-swatch-check { opacity: 1; }
+    .theme-swatch-label { font-size: 11px; color: var(--hero-text-dim); }
+
+    .theme-preview-amber { background: linear-gradient(135deg, #241a10, #120d09 60%, #f59e0b); }
+    .theme-preview-emerald { background: linear-gradient(135deg, #10241c, #071410 60%, #14b8a6); }
+    .theme-preview-navy { background: linear-gradient(135deg, #101f3d, #060b18 60%, #3b82f6); }
+    .theme-preview-ember { background: linear-gradient(135deg, #2a130c, #170805 60%, #ef4444); }
+    .theme-preview-slate { background: linear-gradient(135deg, #171a1f, #0b0d10 60%, #64748b); }
+
+    /* ---------------------------------------------------------------
+       Print font-size zoom control (in the theme modal) — see
+       --print-zoom in base.css and adjustPrintZoom() in hero-chrome.js
+       --------------------------------------------------------------- */
+    .print-zoom-section {
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 2px solid var(--hero-border-dk);
+    }
+    .print-zoom-title {
+        font-size: 12px;
+        color: var(--hero-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+    .print-zoom-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+    }
+    .print-zoom-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        border-style: solid;
+        border-width: 2px;
+        border-color: var(--hero-border-lt) var(--hero-border-dk) var(--hero-border-dk) var(--hero-border-lt);
+        background: linear-gradient(180deg, var(--hero-panel), var(--hero-panel-2));
+        color: var(--hero-gold-bright);
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .print-zoom-btn:hover { filter: brightness(1.2); }
+    .print-zoom-btn:active { filter: brightness(0.9); }
+    .print-zoom-value {
+        min-width: 56px;
+        text-align: center;
+        font-family: 'VT323', monospace;
+        font-size: 22px;
+        color: var(--hero-gold-bright);
+        text-shadow: 0 0 8px rgba(246, 196, 83, 0.45);
+    }
+
+    /* respect users who don't want motion */
+    @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+    }
+}
+
+/* Deliberately placed last in the last-loaded stylesheet (index.html loads
+   this after base.css) so it wins cascade ties against every theme's own
+   !important color overrides above (e.g. tr.row-transfer's themed tint) —
+   without that, receipt capture (hero-chrome.js's heroPrint) would leak
+   whichever theme happens to be active into the printed receipt instead of
+   plain black-on-white, since base.css's own body.print-scale reset rule
+   loses those ties by source order alone. See base.css's body.print-scale
+   rule for the fuller "why" (@media print never activates for the capture
+   path any more, so nothing else forces this). */
+body.print-scale, body.print-scale * {
+    color: #000 !important;
+    border-color: #000 !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    text-shadow: none !important;
+}
