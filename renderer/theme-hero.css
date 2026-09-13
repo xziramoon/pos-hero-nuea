@@ -145,6 +145,40 @@
         --cyan-recon: #22d3ee; --cyan-recon-bg: rgba(34,211,238,0.14);
     }
 
+    /* ===== "กุหลาบทับทิม" (Ruby Rose) ===== */
+    :root[data-theme="rose"] {
+        --hero-bg-1: #1a0610; --hero-bg-2: #240a1a;
+        --hero-panel: #2d0f20; --hero-panel-2: #1f0a16; --hero-panel-3: #170710;
+        --hero-border-lt: #ff9ecf; --hero-border-dk: #7a1f52;
+        --hero-gold: #f472b6; --hero-gold-bright: #f9a8d4;
+        --hero-text: #fff0f7; --hero-text-dim: #f3c9df; --hero-text-faint: #b98aa3;
+        --hero-active-1: #9d174d; --hero-active-2: #ec4899;
+        --hero-glow: rgba(244, 114, 182, 0.35);
+        --hero-radial-1: rgba(219, 39, 119, 0.22); --hero-radial-2: rgba(249, 168, 212, 0.10);
+        --primary: #f472b6; --success: #34d399; --info: #38bdf8; --danger: #f87171; --warning: #fbbf24; --purple: #ec4899;
+        --green60: #4ade80; --green60-bg: rgba(74,222,128,0.14); --green60-light: rgba(74,222,128,0.4);
+        --red60: #f87171; --red60-bg: rgba(248,113,113,0.14);
+        --amber60: #fbbf24; --amber60-bg: rgba(251,191,36,0.14);
+        --cyan-recon: #22d3ee; --cyan-recon-bg: rgba(34,211,238,0.14);
+    }
+
+    /* ===== "อเมทิสต์ราตรี" (Amethyst Night) ===== */
+    :root[data-theme="amethyst"] {
+        --hero-bg-1: #140a1f; --hero-bg-2: #1e1030;
+        --hero-panel: #24123a; --hero-panel-2: #190c28; --hero-panel-3: #120820;
+        --hero-border-lt: #c9a3ff; --hero-border-dk: #5b2d8c;
+        --hero-gold: #a78bfa; --hero-gold-bright: #c4b5fd;
+        --hero-text: #f5f0ff; --hero-text-dim: #d9c8f5; --hero-text-faint: #9c85bd;
+        --hero-active-1: #6d28d9; --hero-active-2: #8b5cf6;
+        --hero-glow: rgba(167, 139, 250, 0.35);
+        --hero-radial-1: rgba(124, 58, 237, 0.22); --hero-radial-2: rgba(196, 181, 253, 0.10);
+        --primary: #a78bfa; --success: #34d399; --info: #38bdf8; --danger: #f87171; --warning: #fbbf24; --purple: #8b5cf6;
+        --green60: #4ade80; --green60-bg: rgba(74,222,128,0.14); --green60-light: rgba(74,222,128,0.4);
+        --red60: #f87171; --red60-bg: rgba(248,113,113,0.14);
+        --amber60: #fbbf24; --amber60-bg: rgba(251,191,36,0.14);
+        --cyan-recon: #22d3ee; --cyan-recon-bg: rgba(34,211,238,0.14);
+    }
+
     html, body { height: 100%; }
 
     body {
@@ -840,6 +874,8 @@
     .theme-preview-navy { background: linear-gradient(135deg, #101f3d, #060b18 60%, #3b82f6); }
     .theme-preview-ember { background: linear-gradient(135deg, #2a130c, #170805 60%, #ef4444); }
     .theme-preview-slate { background: linear-gradient(135deg, #171a1f, #0b0d10 60%, #64748b); }
+    .theme-preview-rose { background: linear-gradient(135deg, #2d0f20, #1a0610 60%, #f472b6); }
+    .theme-preview-amethyst { background: linear-gradient(135deg, #24123a, #140a1f 60%, #a78bfa); }
 
     /* ---------------------------------------------------------------
        Print font-size zoom control (in the theme modal) — see

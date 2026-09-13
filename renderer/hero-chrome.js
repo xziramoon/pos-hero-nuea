@@ -217,7 +217,7 @@
     };
 
     // ---------------------------------------------------------------
-    // Theme picker — 5 palettes, persisted in localStorage, applied via
+    // Theme picker — 7 palettes, persisted in localStorage, applied via
     // a data-theme attribute on <html> (see the head script in
     // index.html that applies it before first paint, and the
     // :root[data-theme="..."] blocks in theme-hero.css).
