@@ -57,10 +57,8 @@
     </div>
 
     <div class="floating-controls no-print">
-        <button onclick="openManualModal()" class="float-btn" style="color: var(--primary); border-color: var(--primary);">📖 คู่มือ</button>
         <button onclick="openDrawerModal()" class="float-btn" style="color: #ea580c; border-color: #ea580c;">🧮 นับลิ้นชัก</button>
         <button onclick="openExchangeModal()" class="float-btn" style="color: var(--purple);">💵 ขอแลกเงิน</button>
-        <button onclick="open6040Modal()" class="float-btn" style="color: var(--green60); border-color: var(--green60); font-weight: 700;">🇹🇭 60:40</button>
         <button onclick="openReconModal()" class="float-btn" style="color: var(--cyan-recon); border-color: var(--cyan-recon); font-weight: 700;">📱 กระทบยอดโอน</button>
         <button onclick="exportToExcel()" class="float-btn" style="color: green;">📥 Excel</button>
         <button onclick="backupData()" class="float-btn" style="color: #0f766e; border-color: #0f766e;">💾 สำรองข้อมูล</button>
@@ -101,7 +99,6 @@
             <div class="type-selector">
                 <label class="type-label lbl-transfer"><input type="radio" name="payType" value="transfer" checked onchange="handleTypeChange()"> 🏦 โอน</label>
                 <label class="type-label lbl-welfare"><input type="radio" name="payType" value="welfare" onchange="handleTypeChange()"> 💳 รัฐ(ปกติ)</label>
-                <label class="type-label lbl-thaiplus"><input type="radio" name="payType" value="thaiplus" onchange="handleTypeChange()"> 🇹🇭 ไทยพลัส</label>
                 <label class="type-label lbl-expense"><input type="radio" name="payType" value="expense" onchange="handleTypeChange()"> 💸 จ่าย</label>
             </div>
             <div class="input-row">
@@ -116,7 +113,6 @@
             <div class="filter-tab active" id="tab-all" onclick="setFilter('all')">ทั้งหมด</div>
             <div class="filter-tab" id="tab-transfer" onclick="setFilter('transfer')">โอน</div>
             <div class="filter-tab" id="tab-welfare" onclick="setFilter('welfare')">บัตรรัฐ</div>
-            <div class="filter-tab" id="tab-thaiplus" onclick="setFilter('thaiplus')" style="color: var(--green60);">ไทยพลัส</div>
             <div class="filter-tab" id="tab-expense" onclick="setFilter('expense')" style="color: var(--danger);">ค่าใช้จ่าย</div>
         </div>
 
@@ -132,9 +128,8 @@
         <div class="footer-stats">
             <div class="sum-row"><span>ยอดเงินโอน</span> <span id="sumTransfer">0</span></div>
             <div class="sum-row"><span>ยอดบัตร/รัฐ (ปกติ)</span> <span id="sumWelfare">0</span></div>
-            <div class="sum-row" style="color: var(--green60); font-weight: 600;"><span>ยอดไทยพลัส (60%)</span> <span id="sumThaiPlus">0</span></div>
             <div class="sum-row" style="color: var(--danger);"><span>ค่าใช้จ่าย</span> <span id="sumExpense">0</span></div>
-            <div class="sum-row highlight"><span>สุทธิ (โอน+บัตร+ไทยพลัส)</span> <span id="sumNet">0</span></div>
+            <div class="sum-row highlight"><span>สุทธิ (โอน+บัตร)</span> <span id="sumNet">0</span></div>
         </div>
     </div>
 
@@ -216,10 +211,10 @@
                     <table style="width:100%; font-size:12px; border-collapse:collapse;">
                         <thead><tr style="color:#666;"><th style="text-align:left; padding:4px;">แหล่งที่มา</th><th style="padding:4px;">ประเภท POS</th><th style="padding:4px; text-align:center;">กระทบยอด</th></tr></thead>
                         <tbody>
-                            <tr><td style="padding:4px;">🏦 ธนาคาร</td><td style="padding:4px;"><select id="pbMapBank" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer">โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus">ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconBank" checked onchange="savePbConfig()"></td></tr>
-                            <tr><td style="padding:4px;">🇹🇭 เป๋าตัง</td><td style="padding:4px;"><select id="pbMapPaotang" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer">โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus" selected>ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconPaotang" onchange="savePbConfig()"></td></tr>
-                            <tr><td style="padding:4px;">💜 Mae Manee</td><td style="padding:4px;"><select id="pbMapMaemanee" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer" selected>โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus">ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconMaemanee" onchange="savePbConfig()"></td></tr>
-                            <tr><td style="padding:4px;">❓ ไม่รู้แหล่งที่มา</td><td style="padding:4px;"><select id="pbMapFallback" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer" selected>โอน</option><option value="welfare">บัตรรัฐ</option><option value="thaiplus">ไทยพลัส</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconFallback" checked onchange="savePbConfig()"></td></tr>
+                            <tr><td style="padding:4px;">🏦 ธนาคาร</td><td style="padding:4px;"><select id="pbMapBank" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer">โอน</option><option value="welfare">บัตรรัฐ</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconBank" checked onchange="savePbConfig()"></td></tr>
+                            <tr><td style="padding:4px;">🇹🇭 เป๋าตัง</td><td style="padding:4px;"><select id="pbMapPaotang" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer">โอน</option><option value="welfare" selected>บัตรรัฐ</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconPaotang" onchange="savePbConfig()"></td></tr>
+                            <tr><td style="padding:4px;">💜 Mae Manee</td><td style="padding:4px;"><select id="pbMapMaemanee" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer" selected>โอน</option><option value="welfare">บัตรรัฐ</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconMaemanee" onchange="savePbConfig()"></td></tr>
+                            <tr><td style="padding:4px;">❓ ไม่รู้แหล่งที่มา</td><td style="padding:4px;"><select id="pbMapFallback" class="pb-token" style="padding:4px; font-size:12px; width:100%;" onchange="savePbConfig()"><option value="transfer" selected>โอน</option><option value="welfare">บัตรรัฐ</option><option value="expense">ค่าใช้จ่าย</option></select></td><td style="text-align:center;"><input type="checkbox" id="pbReconFallback" checked onchange="savePbConfig()"></td></tr>
                         </tbody>
                     </table>
                     <div style="font-size:10px; color:#888; margin-top:4px;">* กระทบยอด = ใส่ยอดเข้าช่องกระทบยอดโอนด้วย (แยกบัญชี 1/2/เป๋าตังตามแหล่งที่มา)</div>
@@ -262,11 +257,6 @@
             <table class="table-grid"><thead><tr><th style="width: 50%;">รายการเงินแลก</th><th style="width: 50%;">จำนวนบาท</th></tr></thead><tbody id="exchangeTableBody"></tbody><tfoot><tr><th style="text-align: right;">รวมเงินทั้งหมด:</th><th id="exTotalTxt" style="text-align: right; color: var(--purple); font-size: 18px;">0</th></tr></tfoot></table>
             <button id="btnExSubmit" class="btn-action" style="background: var(--purple);" onclick="executePrintExchange()" disabled>🖨️ พิมพ์ใบแลกเงิน</button>
         </div>
-    </div>
-
-    <!-- MODAL คู่มือการใช้งาน -->
-    <div id="manualModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 500px;"><div class="modal-header"><h3 style="color: var(--primary);">📖 คู่มือการใช้งานระบบ</h3><button class="close-btn" onclick="closeManualModal()">×</button></div><div class="manual-body"><p style="text-align:center; color:#666;">(ระบบทำงานปกติ)</p></div></div>
     </div>
 
     <!-- 🎨 MODAL เลือกธีมสี -->
@@ -317,114 +307,6 @@
         </div>
     </div>
 
-    <!-- ✨ MODAL คำนวณ 60:40 -->
-    <div id="calc6040Modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="calc-hero">
-                <div class="calc-hero-inner">
-                    <div class="calc-hero-top"><div><h3>🇹🇭 ไทยช่วยไทย พลัส</h3><p>คำนวณสิทธิโครงการ 60:40</p></div><button class="close-btn" onclick="close6040Modal()">×</button></div>
-                    <div class="calc-ratio-pills"><span class="ratio-pill gov">รัฐจ่าย 60%</span><span class="ratio-pill cust">คุณจ่าย 40%</span></div>
-                    <div class="calc-info-strip"><div class="calc-info-item"><span class="ci-val">200฿</span><span class="ci-key">สูงสุด/วัน</span></div><div class="calc-info-item"><span class="ci-val">1,000฿</span><span class="ci-key">วงเงิน/เดือน</span></div></div>
-                </div>
-            </div>
-            <div class="calc-body">
-
-                <!-- ✨ NEW: ตัวเลือกโหมดคำนวณ -->
-                <div class="mode60-selector">
-                    <div class="mode60-tab active" id="m60-price" onclick="setMode60('price')"><span class="m60-ico">📦</span>จากราคาสินค้า</div>
-                    <div class="mode60-tab" id="m60-money" onclick="setMode60('money')"><span class="m60-ico">💰</span>มีเงินเท่านี้</div>
-                    <div class="mode60-tab" id="m60-topup" onclick="setMode60('topup')"><span class="m60-ico">➕</span>อยากได้ของ</div>
-                </div>
-
-                <!-- โหมด 1: ราคาสินค้า (เดิม) -->
-                <div class="mode60-field show" data-field="price">
-                    <div class="calc-input-label"><span>ราคาสินค้าทั้งหมด</span><span class="sub">กรอกตัวเลข</span></div>
-                    <div class="calc-input-wrap"><input type="number" id="c60Price" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
-                </div>
-
-                <!-- ✨ BAKA YUKE v2: โหมด 2: มีเงินเท่านี้ ซื้อได้สูงสุดเท่าไร -->
-                <!-- เปลี่ยนให้กรอก: เงินตัวเองในกระเป๋าตัง + ยอดเงินที่เหลือของผู้ใช้ (พช) -->
-                <div class="mode60-field" data-field="money">
-                    <div class="calc-input-label"><span>💰 เงินตัวเองในกระเป๋าตัง ( พช )</span><span class="sub">ยอดเงินที่เหลือของผู้ใช้</span></div>
-                    <div class="calc-input-wrap"><input type="number" id="c60Wallet" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
-                    <div class="chips-row"><span style="font-size:11px; color:#aaa; align-self:center;">เลือกเร็ว:</span><span class="chip60" onclick="setWallet60(50)">50฿</span><span class="chip60" onclick="setWallet60(80)">80฿</span><span class="chip60" onclick="setWallet60(100)">100฿</span><span class="chip60" onclick="setWallet60(133)">133฿</span><span class="chip60" onclick="setWallet60(200)">200฿</span></div>
-                    <!-- BAKA YUKE v2: แสดงยอดที่ต้องเติม พช ให้ชัดๆ -->
-                    <div class="big-answer topup" id="c60TopupInline" style="margin-top:12px; background: linear-gradient(135deg, #7c2d12, #9a3412);">
-                        <div class="ba-label">💳 ยอดที่ต้องเติมเข้า พช (กระเป๋าเงิน) ของลูกค้า</div>
-                        <div class="ba-value" id="c60TopupAmt" style="color:#fef08a;">0.00 ฿</div>
-                        <div class="ba-sub" id="c60TopupSub">กรอกเงินตัวเองในกระเป๋าตังก่อน</div>
-                    </div>
-                </div>
-
-                <!-- ✨ โหมด 3: อยากได้ของราคานี้ ต้องเติมเท่าไร -->
-                <div class="mode60-field" data-field="topup">
-                    <div class="calc-input-label"><span>ราคาสินค้าที่อยากได้</span><span class="sub">กรอกราคาเต็ม</span></div>
-                    <div class="calc-input-wrap"><input type="number" id="c60WantPrice" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
-                    <div class="calc-input-label"><span>เงินตัวเองในเป๋าตังตอนนี้</span><span class="sub">ยอดที่มีอยู่</span></div>
-                    <div class="calc-input-wrap"><input type="number" id="c60HavePrice" inputmode="decimal" placeholder="0" min="0" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
-                </div>
-
-                <!-- BAKA YUKE v2: เปลี่ยน label เป็น 'ยอดเงินที่เหลือของผู้ใช้' + ช่องกรอก -->
-                <div class="calc-input-label"><span>💳 ยอดเงินที่เหลือของผู้ใช้ ( พช )</span><span class="sub">ดูจากแอปเป๋าตัง → ยอดคงเหลือ</span></div>
-                <div class="calc-input-wrap"><input type="number" id="c60Remaining" inputmode="decimal" placeholder="0" min="0" max="200" oninput="recalc60()"><span class="calc-input-unit">฿</span></div>
-                <!-- ซ่อนช่อง c60Used ไว้ แต่คำนวณจาก c60Remaining อัตโนมัติ -->
-                <input type="hidden" id="c60Used">
-
-                <!-- BAKA YUKE v2: เปลี่ยน label เป็น 'รัฐช่วยไปแล้ว' + 'สิทธิคงเหลือ' ชัดขึ้น -->
-                <div class="quota-bar-wrap"><div class="quota-bar-header"><span>รัฐช่วยไปแล้ว: <strong id="c60UsedLbl">0</strong> ฿</span><span class="qrem" id="c60RemLbl">สิทธิคงเหลือ 200 ฿</span></div><div class="bar-track-sm"><div class="bar-fill-sm" id="c60Bar" style="width:0%"></div></div></div>
-                <!-- BAKA YUKE v2: เปลี่ยน chips ให้ตั้งค่ายอดคงเหลือ (200 - used) แทน -->
-                <div class="chips-row"><span style="font-size:11px; color:#aaa; align-self:center;">เลือกเร็ว:</span><span class="chip60" onclick="setRemaining60(200)">ยังไม่ได้ใช้</span><span class="chip60" onclick="setRemaining60(150)">เหลือ 150฿</span><span class="chip60" onclick="setRemaining60(100)">เหลือ 100฿</span><span class="chip60" onclick="setRemaining60(50)">เหลือ 50฿</span><span class="chip60" onclick="setRemaining60(0)">หมดแล้ว</span></div>
-                <div class="alert60" id="c60Alert"><span id="c60AlertIcon" style="font-size:15px; flex-shrink:0; margin-top:1px;"></span><span id="c60AlertMsg"></span></div>
-
-                <!-- ✨ BAKA YUKE v2: กล่องคำตอบใหญ่ โหมด "มีเงินเท่านี้" -- แสดงว่าซื้อได้สูงสุด -->
-                <div class="big-answer mode60-field" data-field="money" id="c60MoneyBox">
-                    <div class="ba-label">🛒 ซื้อของได้สูงสุด</div>
-                    <div class="ba-value" id="c60MaxBuy">0.00 ฿</div>
-                    <div class="ba-sub" id="c60MoneySub"></div>
-                </div>
-
-                <!-- ✨ กล่องคำตอบใหญ่: โหมด "อยากได้ของ" -->
-                <div class="big-answer topup mode60-field" data-field="topup" id="c60TopupBox">
-                    <div class="ba-label">➕ ต้องเติมเงินเข้าเป๋าตังอีก</div>
-                    <div class="ba-value" id="c60TopupAmt2">0.00 ฿</div>
-                    <div class="ba-sub" id="c60TopupSub2"></div>
-                </div>
-
-                <div class="calc-result-panel">
-                    <div class="calc-result-top">
-                        <div><div class="label" style="color:#fef08a; font-weight:600; font-size:13px;">📲 ยอดที่ต้องเติม / สแกนจ่าย</div><div class="big-amt" id="c60CustPay">0.00 ฿</div></div>
-                        <div><div class="after-label">สิทธิเหลือหลังซื้อ</div><div class="after-amt" id="c60RemAfter">200 ฿</div></div>
-                    </div>
-                    <div class="calc-result-rows">
-                        <div class="crr"><div class="crr-left"><div class="crr-dot d-price"></div><div class="crr-label">ราคาสินค้าเต็ม</div></div><div class="crr-amt" id="c60RPrice">0.00 ฿</div></div>
-                        <div class="crr"><div class="crr-left"><div class="crr-dot d-gov"></div><div><div class="crr-label">รัฐช่วยจ่าย (60%)</div><div class="crr-sub" id="c60GovNote"></div></div></div><div class="crr-amt c-gov" id="c60RGov">0.00 ฿</div></div>
-                        <div class="crr"><div class="crr-left"><div class="crr-dot d-cust"></div><div class="crr-label">ลูกค้าจ่ายเอง (40%)</div></div><div class="crr-amt c-cust" id="c60RCust">0.00 ฿</div></div>
-                        <!-- BAKA YUKE: แสดงยอดที่ต้องเติมเข้า พช (กระเป๋าเงิน) ของลูกค้า -->
-                        <div class="crr" style="background:#fffbeb; margin:0 -14px; padding:8px 14px;"><div class="crr-left"><div class="crr-dot" style="background:#f59e0b;"></div><div class="crr-label" style="font-weight:700; color:#92400e;">💳 ต้องเติมเข้า พช (กระเป๋าเงิน)</div></div><div class="crr-amt" id="c60TopupPanel" style="color:#92400e; font-size:16px;">0.00 ฿</div></div>
-                    </div>
-                </div>
-                <div class="toggle-section">
-                    <div class="toggle-head" id="eg60Head" onclick="toggleEg60()">
-                        <span>📊 ตัวอย่างการคำนวณ</span><span class="arrow">▾</span>
-                    </div>
-                    <div class="toggle-body" id="eg60Body">
-                        <table class="eg60-table">
-                            <thead><tr><th>ราคาสินค้า</th><th>รัฐจ่าย</th><th>คุณจ่าย</th></tr></thead>
-                            <tbody>
-                                <tr><td>50 ฿</td><td class="g">30 ฿</td><td class="r">20 ฿</td></tr>
-                                <tr><td>100 ฿</td><td class="g">60 ฿</td><td class="r">40 ฿</td></tr>
-                                <tr><td>200 ฿</td><td class="g">120 ฿</td><td class="r">80 ฿</td></tr>
-                                <tr><td>333 ฿</td><td class="g">200 ฿ ⚠️</td><td class="r">133 ฿</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <button id="btnSave6040" class="btn-save-60" onclick="apply6040ToPOS()" disabled>📥 แยกลง POS อัตโนมัติ</button>
-                <button class="btn-cancel-60" onclick="close6040Modal()">✕ ปิด (ไม่บันทึก)</button>
-            </div>
-        </div>
-    </div>
-
     <!-- PRINT AREA: สรุปกระทบยอดโอน -->
     <div id="printReconArea">
         <div class="slip-title">สรุปกระทบยอดรับดิจิทัล</div>
@@ -463,9 +345,8 @@
         <div class="slip-summary-box">
             <div class="slip-summary-row"><span>ยอดเงินโอน:</span> <span id="slipSumTransfer">0</span></div>
             <div class="slip-summary-row"><span>ยอดบัตร/รัฐ (ปกติ):</span> <span id="slipSumWelfare">0</span></div>
-            <div class="slip-summary-row"><span>ยอดไทยพลัส (60%):</span> <span id="slipSumThaiplus">0</span></div>
             <div class="slip-summary-row" style="margin-top: 10px; border-top: 1px dotted #000; padding-top: 10px;">
-                <span>สุทธิ (โอน+บัตร+ไทยพลัส):</span> <span id="slipSumNet" style="font-size: 18px;">0</span>
+                <span>สุทธิ (โอน+บัตร):</span> <span id="slipSumNet" style="font-size: 18px;">0</span>
             </div>
             <div class="slip-summary-row" style="margin-top: 15px; font-size: 14px; font-weight: normal;"><span>หัก ค่าใช้จ่าย:</span> <span id="slipSumExpense">0</span></div>
         </div>

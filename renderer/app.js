@@ -75,10 +75,6 @@
                 nameInput.value = '';
                 nameInput.placeholder = "ชื่อผู้โอน / รายการ...";
                 amtInput.placeholder = "ยอดเงินโอน...";
-            } else if (type === 'thaiplus') {
-                nameInput.value = '';
-                nameInput.placeholder = "ชื่อลูกค้า (ถ้ามี)...";
-                amtInput.placeholder = "ยอดสแกน...";
             } else {
                 nameInput.value = '';
                 nameInput.placeholder = "ระบุรายการ...";
@@ -246,32 +242,30 @@
 
         function renderTable() {
             const tbody = document.getElementById('tableBody');
-            let t=0, w=0, tp=0, e=0, cT=0, cW=0, cP=0, cE=0;
+            let t=0, w=0, e=0, cT=0, cW=0, cE=0;
 
             records.forEach(r => {
                 const amt = Math.round((parseFloat(r.amount) || 0) * 100);
                 if (r.type === 'transfer') { t += amt; cT++; }
                 else if (r.type === 'welfare') { w += amt; cW++; }
-                else if (r.type === 'thaiplus') { tp += amt; cP++; }
                 else { e += amt; cE++; }
             });
 
             tbody.innerHTML = records.map((r, i) => { return {...r, originalIndex: i}; })
                 .filter(r => currentFilter === 'all' || r.type === currentFilter)
                 .map((r) => {
-                    let badge = r.type==='transfer' ? '<span class="badge bg-tr">โอน</span>' : r.type==='welfare' ? '<span class="badge bg-wel">บัตร</span>' : r.type==='thaiplus' ? '<span class="badge bg-thaiplus">ไทยพลัส</span>' : '<span class="badge bg-exp">จ่าย</span>';
-                    let cls = r.type==='transfer' ? 'row-transfer' : r.type==='welfare' ? 'row-welfare' : r.type==='thaiplus' ? 'row-thaiplus' : 'row-expense';
+                    let badge = r.type==='transfer' ? '<span class="badge bg-tr">โอน</span>' : r.type==='welfare' ? '<span class="badge bg-wel">บัตร</span>' : '<span class="badge bg-exp">จ่าย</span>';
+                    let cls = r.type==='transfer' ? 'row-transfer' : r.type==='welfare' ? 'row-welfare' : 'row-expense';
                     let editedMark = r.isEdited ? '<span class="edited-mark">✎</span>' : '';
                     return '<tr class="' + cls + '"><td style="text-align:center; color:#ccc;">' + (r.originalIndex+1) + '</td><td style="font-size:12px; color:#666;">' + r.time + '</td><td style="text-align:center;">' + badge + '</td><td class="name-editable" onclick="editName(' + r.originalIndex + ')" title="แตะเพื่อแก้ไขชื่อ">' + escapeHTML(r.name) + editedMark + '</td><td class="amt-editable" style="text-align:right; font-weight:bold;" onclick="editAmount(' + r.originalIndex + ')" title="แตะเพื่อแก้ไขยอด">' + (parseFloat(r.amount)||0).toLocaleString('en-US') + '</td><td class="no-print" style="text-align:center;"><span class="action-btn" style="color:red;" onclick="deleteRecord(' + r.originalIndex + ')">×</span></td></tr>';
                 }).join('');
 
             document.getElementById('sumTransfer').innerText = (t/100).toLocaleString('en-US');
             document.getElementById('sumWelfare').innerText = (w/100).toLocaleString('en-US');
-            document.getElementById('sumThaiPlus').innerText = (tp/100).toLocaleString('en-US');
             document.getElementById('sumExpense').innerText = (e/100).toLocaleString('en-US');
-            document.getElementById('sumNet').innerText = ((t+w+tp)/100).toLocaleString('en-US');
-            updateTabCounts(cT, cW, cP, cE);
-            updateMiniWidget(records, (t+w+tp)/100);
+            document.getElementById('sumNet').innerText = ((t+w)/100).toLocaleString('en-US');
+            updateTabCounts(cT, cW, cE);
+            updateMiniWidget(records, (t+w)/100);
         }
 
         // เติมข้อมูลให้วิดเจ็ตจิ๋ว (โหมดย่อ) ไม่ว่าจะกำลังโชว์อยู่หรือไม่ก็ตาม
@@ -293,11 +287,10 @@
         function setTabLabel(id, text, count) {
             document.getElementById(id).innerHTML = count > 0 ? text + '<span class="tab-count">' + count + '</span>' : text;
         }
-        function updateTabCounts(cT, cW, cP, cE) {
-            setTabLabel('tab-all', 'ทั้งหมด', cT + cW + cP + cE);
+        function updateTabCounts(cT, cW, cE) {
+            setTabLabel('tab-all', 'ทั้งหมด', cT + cW + cE);
             setTabLabel('tab-transfer', 'โอน', cT);
             setTabLabel('tab-welfare', 'บัตรรัฐ', cW);
-            setTabLabel('tab-thaiplus', 'ไทยพลัส', cP);
             setTabLabel('tab-expense', 'ค่าใช้จ่าย', cE);
         }
 
@@ -305,9 +298,6 @@
         // ส่วนที่ 8: นับลิ้นชัก + แลกเงิน + Export
         // ==========================================
         const denoms = [ { val: 1000, label: 'แบงก์ 1000', exLabel: '1000' }, { val: 500, label: 'แบงก์ 500', exLabel: '500' }, { val: 100, label: 'แบงก์ 100', exLabel: '100' }, { val: 50, label: 'แบงก์ 50', exLabel: '50' }, { val: 20, label: 'แบงก์ 20', exLabel: '20' }, { val: 10, label: 'เหรียญ 10', exLabel: 'เหรียญ 10' }, { val: 5, label: 'เหรียญ 5', exLabel: 'เหรียญ 5' }, { val: 2, label: 'เหรียญ 2', exLabel: 'เหรียญ 2' }, { val: 1, label: 'เหรียญ 1', exLabel: 'เหรียญ 1' } ];
-
-        function openManualModal() { document.getElementById('manualModal').style.display = 'flex'; }
-        function closeManualModal() { document.getElementById('manualModal').style.display = 'none'; }
 
         const STARTING_FLOAT = 7000;
         function initDrawerTable() { document.getElementById('drawerTableBody').innerHTML = denoms.map(d => '<tr><td>' + d.label + '</td><td style="text-align:center;"><input type="number" id="dr_qty_' + d.val + '" class="num-input" min="0" oninput="calcDrawer()"></td><td class="val-display" id="dr_val_' + d.val + '">0</td></tr>').join(''); }
@@ -377,12 +367,12 @@
 
         function exportToExcel() {
             if(records.length === 0) { alert('⚠️ ไม่มีข้อมูลสำหรับ Export'); return; }
-            let t = 0, w = 0, tp = 0, e = 0;
-            records.forEach(r => { let amt = Math.round((parseFloat(r.amount) || 0) * 100); if(r.type === 'transfer') t += amt; else if(r.type === 'welfare') w += amt; else if(r.type === 'thaiplus') tp += amt; else e += amt; });
+            let t = 0, w = 0, e = 0;
+            records.forEach(r => { let amt = Math.round((parseFloat(r.amount) || 0) * 100); if(r.type === 'transfer') t += amt; else if(r.type === 'welfare') w += amt; else e += amt; });
             let dateStr = document.getElementById('headDate').innerText, cashier = document.getElementById('headCashier').value || 'ไม่ระบุชื่อ';
-            let html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>table{border-collapse:collapse;}th{background:#eee;border:1px solid #000;}td{border:1px solid #ccc;padding:5px;}.bg-g{background:#d1fae5;}.bg-b{background:#e0f2fe;}.bg-tp{background:#E4F4EC;}.bg-r{background:#fee2e2;}</style></head><body><h3>รายงานยอดขาย ' + dateStr + ' (แคชเชียร์: ' + escapeHTML(cashier) + ')</h3><table><thead><tr><th>เวลา</th><th>ประเภท</th><th>รายการ</th><th>ยอดเงิน</th></tr></thead><tbody>';
-            records.forEach(rec => { let bg = rec.type === 'transfer' ? 'bg-g' : (rec.type === 'welfare' ? 'bg-b' : (rec.type === 'thaiplus' ? 'bg-tp' : 'bg-r')); let typeText = rec.type === 'thaiplus' ? 'ไทยพลัส' : rec.type; html += '<tr><td class="' + bg + '">' + rec.time + '</td><td class="' + bg + '">' + typeText + '</td><td class="' + bg + '">' + escapeHTML(rec.name) + '</td><td class="' + bg + '" style="text-align:right;">' + (parseFloat(rec.amount) || 0).toLocaleString('en-US') + '</td></tr>'; });
-            html += '</tbody></table><br><table border="1"><tr><td>โอน:</td><td>' + (t/100).toLocaleString('en-US') + '</td></tr><tr><td>บัตร:</td><td>' + (w/100).toLocaleString('en-US') + '</td></tr><tr><td>ไทยพลัส:</td><td>' + (tp/100).toLocaleString('en-US') + '</td></tr><tr><td>ค่าใช้จ่าย:</td><td>' + (e/100).toLocaleString('en-US') + '</td></tr><tr><td>สุทธิ:</td><td>' + ((t+w+tp)/100).toLocaleString('en-US') + '</td></tr></table></body></html>';
+            let html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>table{border-collapse:collapse;}th{background:#eee;border:1px solid #000;}td{border:1px solid #ccc;padding:5px;}.bg-g{background:#d1fae5;}.bg-b{background:#e0f2fe;}.bg-r{background:#fee2e2;}</style></head><body><h3>รายงานยอดขาย ' + dateStr + ' (แคชเชียร์: ' + escapeHTML(cashier) + ')</h3><table><thead><tr><th>เวลา</th><th>ประเภท</th><th>รายการ</th><th>ยอดเงิน</th></tr></thead><tbody>';
+            records.forEach(rec => { let bg = rec.type === 'transfer' ? 'bg-g' : (rec.type === 'welfare' ? 'bg-b' : 'bg-r'); html += '<tr><td class="' + bg + '">' + rec.time + '</td><td class="' + bg + '">' + rec.type + '</td><td class="' + bg + '">' + escapeHTML(rec.name) + '</td><td class="' + bg + '" style="text-align:right;">' + (parseFloat(rec.amount) || 0).toLocaleString('en-US') + '</td></tr>'; });
+            html += '</tbody></table><br><table border="1"><tr><td>โอน:</td><td>' + (t/100).toLocaleString('en-US') + '</td></tr><tr><td>บัตร:</td><td>' + (w/100).toLocaleString('en-US') + '</td></tr><tr><td>ค่าใช้จ่าย:</td><td>' + (e/100).toLocaleString('en-US') + '</td></tr><tr><td>สุทธิ:</td><td>' + ((t+w)/100).toLocaleString('en-US') + '</td></tr></table></body></html>';
             const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
@@ -477,7 +467,6 @@
             document.getElementById('slipSumCount').innerText = records.length;
             document.getElementById('slipSumTransfer').innerText = document.getElementById('sumTransfer').innerText;
             document.getElementById('slipSumWelfare').innerText = document.getElementById('sumWelfare').innerText;
-            document.getElementById('slipSumThaiplus').innerText = document.getElementById('sumThaiPlus').innerText;
             document.getElementById('slipSumNet').innerText = document.getElementById('sumNet').innerText;
             document.getElementById('slipSumExpense').innerText = document.getElementById('sumExpense').innerText;
             document.body.classList.add('print-summary-only');
@@ -485,133 +474,6 @@
         }
 
         window.addEventListener('afterprint', function() { clearPrintClasses(); });
-
-        // ==========================================
-        // ส่วนที่ 10: คำนวณ 60:40 ไทยพลัส
-        // ==========================================
-        var currentMode60 = 'price';
-        function open6040Modal() {
-            document.getElementById('calc6040Modal').style.display = 'flex';
-            document.getElementById('c60Price').value = '';
-            document.getElementById('c60Used').value = '';
-            document.getElementById('c60Remaining').value = '';
-            document.getElementById('c60Wallet').value = '';
-            document.getElementById('c60WantPrice').value = '';
-            document.getElementById('c60HavePrice').value = '';
-            document.getElementById('c60TopupAmt').textContent = '0.00 ฿';
-            document.getElementById('c60TopupSub').textContent = 'กรอกเงินตัวเองในกระเป๋าตังก่อน';
-            setMode60('price');
-            calc60();
-            setTimeout(function(){ document.getElementById('c60Price').focus(); }, 150);
-        }
-        function close6040Modal() { document.getElementById('calc6040Modal').style.display = 'none'; }
-        function toggleEg60() { var head = document.getElementById('eg60Head'), body = document.getElementById('eg60Body'); head.classList.toggle('open'); body.classList.toggle('open'); }
-        function setRemaining60(val) { document.getElementById('c60Remaining').value = val; document.getElementById('c60Used').value = 200 - val; recalc60(); }
-        function setUsed60(val) { document.getElementById('c60Used').value = val; document.getElementById('c60Remaining').value = 200 - val; recalc60(); }
-        function setWallet60(val) { document.getElementById('c60Wallet').value = val; recalc60(); }
-        function fmt60(n) { return n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-        function setMode60(mode) {
-            currentMode60 = mode;
-            document.getElementById('m60-price').classList.toggle('active', mode === 'price');
-            document.getElementById('m60-money').classList.toggle('active', mode === 'money');
-            document.getElementById('m60-topup').classList.toggle('active', mode === 'topup');
-            document.querySelectorAll('.mode60-field').forEach(function(el) { el.classList.toggle('show', el.getAttribute('data-field') === mode); });
-            var oldPanel = document.querySelector('#calc6040Modal .calc-result-panel');
-            if (oldPanel) oldPanel.style.display = (mode === 'price') ? 'block' : 'none';
-            var btn = document.getElementById('btnSave6040');
-            btn.style.display = (mode === 'price') ? 'block' : 'none';
-            recalc60();
-            setTimeout(function() { var focusId = mode === 'price' ? 'c60Price' : mode === 'money' ? 'c60Wallet' : 'c60WantPrice'; var el = document.getElementById(focusId); if (el) el.focus(); }, 100);
-        }
-        function recalc60() {
-            var remaining = parseFloat(document.getElementById('c60Remaining').value);
-            if (!isNaN(remaining) && remaining >= 0 && remaining <= 200) { document.getElementById('c60Used').value = 200 - remaining; }
-            if (currentMode60 === 'price') calc60(); else if (currentMode60 === 'money') calcMoney60(); else if (currentMode60 === 'topup') calcTopup60();
-            updateQuotaBar60();
-        }
-        function updateQuotaBar60() {
-            var used = Math.max(0, Math.min(200, parseFloat(document.getElementById('c60Used').value) || 0));
-            var remaining = 200 - used;
-            var pct = Math.min(100, (used / 200) * 100);
-            document.getElementById('c60Bar').style.width = pct + '%';
-            document.getElementById('c60Bar').className = 'bar-fill-sm' + (remaining <= 0 ? ' empty' : remaining <= 60 ? ' low' : '');
-            document.getElementById('c60UsedLbl').textContent = fmt60(used);
-            var remLbl = document.getElementById('c60RemLbl');
-            if (remaining <= 0) { remLbl.textContent = 'หมดสิทธิวันนี้'; remLbl.className = 'qrem empty'; }
-            else { remLbl.textContent = 'สิทธิคงเหลือ ' + fmt60(remaining) + ' ฿'; remLbl.className = 'qrem' + (remaining <= 60 ? ' low' : ''); }
-        }
-        function calcMoney60() {
-            var W = Math.max(0, parseFloat(document.getElementById('c60Wallet').value) || 0);
-            var used = Math.max(0, Math.min(200, parseFloat(document.getElementById('c60Used').value) || 0));
-            var Q = 200 - used;
-            var alertBox = document.getElementById('c60Alert'), alertMsg = document.getElementById('c60AlertMsg'), alertIcon = document.getElementById('c60AlertIcon');
-            if (W <= 0) { document.getElementById('c60MaxBuy').textContent = '0.00 ฿'; document.getElementById('c60MoneySub').textContent = 'กรอกเงินตัวเองในกระเป๋าตังก่อน'; document.getElementById('c60TopupAmt').textContent = '0.00 ฿'; document.getElementById('c60TopupSub').textContent = 'กรอกเงินตัวเองในกระเป๋าตังก่อน'; alertBox.className = 'alert60'; return; }
-            var needToCap = (0.6 / 0.4) * W;
-            if (needToCap <= Q) { var Pmax = W + needToCap; var govUsed = needToCap; }
-            else { var Pmax = W + Q; var govUsed = Q; }
-            document.getElementById('c60MaxBuy').textContent = fmt60(Pmax) + ' ฿';
-            document.getElementById('c60MoneySub').textContent = 'เงินตัวเอง ' + fmt60(W) + ' + รัฐช่วย ' + fmt60(govUsed) + ' = ของได้สูงสุด ' + fmt60(Pmax) + ' บาท';
-            document.getElementById('c60TopupAmt').textContent = fmt60(Pmax - W) + ' ฿';
-            document.getElementById('c60TopupSub').textContent = 'ยอดที่ต้องเติม พช = ของที่ซื้อได้สูงสุด - เงินตัวเอง';
-            if (Pmax <= 200) { alertBox.className = 'alert60 ok show'; alertIcon.textContent = '✅'; alertMsg.textContent = 'ยังอยู่ในสิทธิ 200 บาท/วัน ไม่มีปัญหา'; }
-            else if (govUsed >= Q) { alertBox.className = 'alert60 warn show'; alertIcon.textContent = '⚠️'; alertMsg.textContent = 'สิทธิตันแล้ว! ใช้สิทธิครบ ' + fmt60(used + govUsed) + ' บาท จากวงเงิน 200 บาท'; }
-            else { alertBox.className = 'alert60'; }
-        }
-        function calcTopup60() {
-            var wantPrice = Math.max(0, parseFloat(document.getElementById('c60WantPrice').value) || 0);
-            var havePrice = Math.max(0, parseFloat(document.getElementById('c60HavePrice').value) || 0);
-            var used = Math.max(0, Math.min(200, parseFloat(document.getElementById('c60Used').value) || 0));
-            var Q = 200 - used;
-            var alertBox = document.getElementById('c60Alert'), alertMsg = document.getElementById('c60AlertMsg'), alertIcon = document.getElementById('c60AlertIcon');
-            if (wantPrice <= 0) { document.getElementById('c60TopupAmt2').textContent = '0.00 ฿'; document.getElementById('c60TopupSub2').textContent = 'กรอกราคาสินค้าก่อน'; alertBox.className = 'alert60'; return; }
-            var govHelp = Math.min(wantPrice * 0.6, Q);
-            var custPay = wantPrice - govHelp;
-            var topupNeed = Math.max(0, custPay - havePrice);
-            document.getElementById('c60TopupAmt2').textContent = fmt60(topupNeed) + ' ฿';
-            document.getElementById('c60TopupSub2').textContent = 'ราคา ' + fmt60(wantPrice) + ' - รัฐช่วย ' + fmt60(govHelp) + ' - มีอยู่แล้ว ' + fmt60(havePrice) + ' = ต้องเติมอีก ' + fmt60(topupNeed) + ' บาท';
-            if (topupNeed <= 0) { alertBox.className = 'alert60 ok show'; alertIcon.textContent = '✅'; alertMsg.textContent = 'ไม่ต้องเติมเพิ่ม! เงินที่มีพอจ่ายแล้ว'; }
-            else if (govHelp >= Q) { alertBox.className = 'alert60 warn show'; alertIcon.textContent = '⚠️'; alertMsg.textContent = 'สิทธิตันแล้ว รัฐช่วยได้แค่ ' + fmt60(govHelp) + ' บาท'; }
-            else { alertBox.className = 'alert60'; }
-        }
-        function calc60() {
-            var price = parseFloat(document.getElementById('c60Price').value) || 0;
-            var used = Math.max(0, Math.min(200, parseFloat(document.getElementById('c60Used').value) || 0));
-            var Q = 200 - used;
-            var govHelp = Math.min(price * 0.6, Q);
-            var custPay = price - govHelp;
-            var remainingAfter = Q - govHelp;
-            document.getElementById('c60CustPay').textContent = fmt60(custPay) + ' ฿';
-            document.getElementById('c60RemAfter').textContent = fmt60(remainingAfter) + ' ฿';
-            document.getElementById('c60RPrice').textContent = fmt60(price) + ' ฿';
-            document.getElementById('c60RGov').textContent = fmt60(govHelp) + ' ฿';
-            document.getElementById('c60RCust').textContent = fmt60(custPay) + ' ฿';
-            document.getElementById('c60GovNote').textContent = govHelp < price * 0.6 ? '(สิทธิตัน) เหลือ ' + fmt60(remainingAfter) + ' บาท' : '';
-            document.getElementById('c60TopupPanel').textContent = fmt60(custPay) + ' ฿';
-            var btn = document.getElementById('btnSave6040');
-            if (btn) btn.disabled = (price <= 0);
-            var formulaBox = document.getElementById('c60Formula');
-            if (formulaBox) { if (price > 0) { formulaBox.className = 'formula60 show'; } else { formulaBox.className = 'formula60'; } }
-            var alertBox = document.getElementById('c60Alert'), alertMsg = document.getElementById('c60AlertMsg'), alertIcon = document.getElementById('c60AlertIcon');
-            if (price <= 0) { alertBox.className = 'alert60'; return; }
-            if (govHelp >= Q) { alertBox.className = 'alert60 warn show'; alertIcon.textContent = '⚠️'; alertMsg.textContent = 'สิทธิตันแล้ว! รัฐช่วยได้แค่ ' + fmt60(govHelp) + ' บาท จากวงเงิน 200 บาท (ใช้ไป ' + fmt60(used) + ' บาทแล้ว)'; }
-            else { alertBox.className = 'alert60'; }
-        }
-        function apply6040ToPOS() {
-            var price = parseFloat(document.getElementById('c60Price').value) || 0;
-            if (price <= 0) { alert('⚠️ กรุณากรอกราคาสินค้าก่อน'); return; }
-            var used = Math.max(0, Math.min(200, parseFloat(document.getElementById('c60Used').value) || 0));
-            var Q = 200 - used;
-            var govHelp = Math.min(price * 0.6, Q);
-            var custPay = price - govHelp;
-            records.push({ time: new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}), type: 'thaiplus', name: 'ลูกค้า (ไทยพลัส)', amount: price, isEdited: false });
-            localStorage.setItem('posUltimateRecords', JSON.stringify(records));
-            localStorage.setItem('posUltimateDate', new Date().toLocaleDateString('th-TH'));
-            document.getElementById('c60Used').value = used + govHelp;
-            document.getElementById('c60Remaining').value = 200 - (used + govHelp);
-            renderTable();
-            if (typeof celebrateTransaction === 'function') celebrateTransaction(price, { moneyIn: false });
-            close6040Modal();
-        }
 
         // ==========================================
         // ส่วนที่ 11: 🛡️ PUSHBULLET WEBSOCKET — Fixed Version
@@ -687,7 +549,7 @@
         function savePbConfig() {
             const cfg = {
                 bank:     document.getElementById('pbMapBank')     ? document.getElementById('pbMapBank').value     : 'transfer',
-                paotang:  document.getElementById('pbMapPaotang')  ? document.getElementById('pbMapPaotang').value  : 'thaiplus',
+                paotang:  document.getElementById('pbMapPaotang')  ? document.getElementById('pbMapPaotang').value  : 'welfare',
                 maemanee: document.getElementById('pbMapMaemanee') ? document.getElementById('pbMapMaemanee').value : 'transfer',
                 fallback: document.getElementById('pbMapFallback') ? document.getElementById('pbMapFallback').value : 'transfer',
                 reconBank:     document.getElementById('pbReconBank')     ? document.getElementById('pbReconBank').checked     : true,
@@ -715,7 +577,7 @@
 
         function getPbConfig() {
             try { const saved = JSON.parse(localStorage.getItem('pbConfig')); if (saved) return saved; } catch(e) {}
-            return { bank: 'transfer', paotang: 'thaiplus', maemanee: 'transfer', fallback: 'transfer', reconBank: true, reconPaotang: false, reconMaemanee: false, reconFallback: true };
+            return { bank: 'transfer', paotang: 'welfare', maemanee: 'transfer', fallback: 'transfer', reconBank: true, reconPaotang: false, reconMaemanee: false, reconFallback: true };
         }
 
         // ==========================================

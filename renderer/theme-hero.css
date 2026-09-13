@@ -365,7 +365,6 @@
     td { border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--hero-text); }
     tr.row-transfer { background-color: rgba(74, 222, 128, 0.08) !important; }
     tr.row-welfare { background-color: rgba(56, 189, 248, 0.08) !important; }
-    tr.row-thaiplus { background-color: rgba(246, 196, 83, 0.10) !important; }
     tr.row-expense { background-color: rgba(248, 113, 113, 0.10) !important; }
     .badge { box-shadow: 0 1px 0 rgba(0,0,0,0.4); text-shadow: 0 1px 1px rgba(0,0,0,0.5); }
 
@@ -438,77 +437,16 @@
     .status-short { background: rgba(248,113,113,0.16) !important; color: #fca5a5 !important; border: 1px solid rgba(248,113,113,0.4) !important; }
     .status-over { background: rgba(251,191,36,0.16) !important; color: #fde68a !important; border: 1px solid rgba(251,191,36,0.4) !important; }
     .btn-action:disabled { background: #3a3355 !important; color: var(--hero-text-faint) !important; }
-    .btn-save-60:disabled { background: #3a3355 !important; color: var(--hero-text-faint) !important; }
 
-    .manual-body { color: var(--hero-text-dim); }
     .hint-box { background: rgba(251,191,36,0.12); border-left: 4px solid var(--warning); color: #fde68a; }
 
     .acc-btn { background: var(--hero-panel-3); color: var(--primary); border: 1px solid var(--hero-border-dk); }
     .acc-btn:hover { background: rgba(255,255,255,0.06); }
     .acc-content { background: var(--hero-panel-2); border: 1px solid var(--hero-border-dk); border-top: none; color: var(--hero-text-dim); }
 
-    /* ---------------------------------------------------------------
-       60:40 boss-banner calculator
-       --------------------------------------------------------------- */
-    #calc6040Modal .modal-content { border-radius: 8px; overflow: hidden; }
-    .calc-hero {
-        background: linear-gradient(135deg, var(--hero-active-1) 0%, #78350f 55%, #171030 100%) !important;
-        border-bottom: 2px solid var(--hero-border-dk);
-    }
-    .btn-cancel-60 { background: var(--hero-panel-3) !important; color: var(--hero-text-dim) !important; }
-    .btn-cancel-60:hover { background: rgba(255,255,255,0.08) !important; color: var(--hero-text) !important; }
-
-    .calc-input-label span:first-child { color: var(--hero-text); }
-    .calc-input-label .sub { color: var(--hero-text-faint); }
-    .calc-input-wrap input[type="number"],
-    .calc-input-wrap input[type="text"] {
-        background: var(--hero-panel-3) !important;
-        border: 2px solid var(--hero-border-dk) !important;
-        color: var(--hero-gold-bright) !important;
-        font-family: 'VT323', monospace !important;
-        font-size: 24px !important;
-    }
-    .calc-input-wrap input:focus { border-color: var(--hero-gold) !important; box-shadow: 0 0 0 3px var(--hero-glow) !important; }
-    .calc-input-unit { color: var(--hero-text-faint); }
-
-    .quota-bar-header span { color: var(--hero-text-faint); }
-    .bar-track-sm { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); }
-    .bar-fill-sm { box-shadow: 0 0 8px rgba(74,222,128,0.6); }
-    .bar-fill-sm.low { box-shadow: 0 0 8px rgba(251,191,36,0.6); }
-    .bar-fill-sm.empty { box-shadow: 0 0 8px rgba(248,113,113,0.6); }
-
-    .chip60 { background: var(--hero-panel-3); border: 1px solid var(--hero-border-dk); color: var(--hero-text-dim); }
-    .chip60:hover { background: rgba(74,222,128,0.14); border-color: rgba(74,222,128,0.4); color: var(--green60); }
-
-    .mode60-selector { background: var(--hero-panel-3); }
-    .mode60-tab { color: var(--hero-text-dim); }
-    .mode60-tab:hover { background: rgba(255,255,255,0.07); color: var(--hero-text); }
-    .mode60-tab.active { background: linear-gradient(180deg, var(--hero-active-2), var(--hero-active-1)) !important; color: #fff !important; box-shadow: 0 3px 10px -2px rgba(245,158,11,0.6) !important; }
-
-    .calc-result-panel {
-        background: linear-gradient(135deg, var(--hero-active-1) 0%, #78350f 100%) !important;
-        border: 1px solid var(--hero-border-dk);
-    }
-    .calc-result-rows { background: var(--hero-panel-3) !important; }
-    .crr { border-bottom: 1px solid rgba(255,255,255,0.06); }
-    .crr-label { color: var(--hero-text-dim); }
-    .crr-sub { color: var(--hero-text-faint); }
-    .crr-amt { color: var(--hero-text) !important; font-family: 'VT323', monospace; font-size: 16px; }
-    .crr[style*="fffbeb"] { background: rgba(246,196,83,0.10) !important; }
-
-    .formula60 { background: var(--hero-panel-3); color: var(--hero-text-faint); }
-    .f60num { color: var(--hero-text-dim); }
-    .eg60-table th { color: var(--hero-text-faint); border-bottom: 1px solid var(--hero-border-dk); }
-    .eg60-table td { border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--hero-text-dim); }
-    .toggle-head { border-top: 1px solid var(--hero-border-dk); color: var(--hero-text-dim); }
-    .toggle-head .arrow { color: var(--hero-text-faint); }
-
     /* numeric "HUD" readouts rendered in the retro terminal font */
-    #sumTransfer, #sumWelfare, #sumThaiPlus, #sumExpense, #sumNet,
-    .amt-editable, .val-display,
-    .ba-value, .big-amt, .after-amt,
-    #c60MaxBuy, #c60TopupAmt, #c60TopupAmt2, #c60CustPay,
-    #c60TopupPanel, #c60RPrice, #c60RGov, #c60RCust {
+    #sumTransfer, #sumWelfare, #sumExpense, #sumNet,
+    .amt-editable, .val-display {
         font-family: 'VT323', monospace;
         letter-spacing: 0.5px;
     }
