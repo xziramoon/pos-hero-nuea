@@ -299,9 +299,8 @@
         // ==========================================
         const denoms = [ { val: 1000, label: 'แบงก์ 1000', exLabel: '1000' }, { val: 500, label: 'แบงก์ 500', exLabel: '500' }, { val: 100, label: 'แบงก์ 100', exLabel: '100' }, { val: 50, label: 'แบงก์ 50', exLabel: '50' }, { val: 20, label: 'แบงก์ 20', exLabel: '20' }, { val: 10, label: 'เหรียญ 10', exLabel: 'เหรียญ 10' }, { val: 5, label: 'เหรียญ 5', exLabel: 'เหรียญ 5' }, { val: 2, label: 'เหรียญ 2', exLabel: 'เหรียญ 2' }, { val: 1, label: 'เหรียญ 1', exLabel: 'เหรียญ 1' } ];
 
-        const STARTING_FLOAT = 7000;
         function initDrawerTable() { document.getElementById('drawerTableBody').innerHTML = denoms.map(d => '<tr><td>' + d.label + '</td><td style="text-align:center;"><input type="number" id="dr_qty_' + d.val + '" class="num-input" min="0" oninput="calcDrawer()"></td><td class="val-display" id="dr_val_' + d.val + '">0</td></tr>').join(''); }
-        function openDrawerModal() { let totalExpense = 0; records.forEach(r => { if(r.type === 'expense') totalExpense += (parseFloat(r.amount)||0); }); document.getElementById('dsExpense').innerText = '-' + totalExpense.toLocaleString('en-US'); document.getElementById('drawerModal').dataset.expense = totalExpense; document.getElementById('dsCashSales').value = ''; document.getElementById('dsOffBill').value = ''; denoms.forEach(d => { document.getElementById('dr_qty_' + d.val).value = ''; document.getElementById('dr_val_' + d.val).innerText = '0'; }); calcDrawer(); document.getElementById('drawerModal').style.display = 'flex'; }
+        function openDrawerModal() { let totalExpense = 0; records.forEach(r => { if(r.type === 'expense') totalExpense += (parseFloat(r.amount)||0); }); document.getElementById('dsExpense').innerText = '+' + totalExpense.toLocaleString('en-US'); document.getElementById('drawerModal').dataset.expense = totalExpense; document.getElementById('dsCashSales').value = ''; document.getElementById('dsOffBill').value = ''; denoms.forEach(d => { document.getElementById('dr_qty_' + d.val).value = ''; document.getElementById('dr_val_' + d.val).innerText = '0'; }); calcDrawer(); document.getElementById('drawerModal').style.display = 'flex'; }
         function closeDrawerModal() { document.getElementById('drawerModal').style.display = 'none'; }
 
         function calcDrawer() {
@@ -309,15 +308,15 @@
             denoms.forEach(d => { let qty = parseInt(document.getElementById('dr_qty_' + d.val).value) || 0; let val = qty * d.val; document.getElementById('dr_val_' + d.val).innerText = val.toLocaleString('en-US'); actualCash += val; });
             document.getElementById('dsActual').innerText = actualCash.toLocaleString('en-US');
             let totalExpense = parseFloat(document.getElementById('drawerModal').dataset.expense) || 0;
-            let cashSales = parseFloat(document.getElementById('dsCashSales').value) || 0;
+            let posRemit = parseFloat(document.getElementById('dsCashSales').value) || 0;
             let offBillSales = parseFloat(document.getElementById('dsOffBill').value) || 0;
-            let expectedCash = STARTING_FLOAT + cashSales - totalExpense - offBillSales;
-            document.getElementById('dsExpected').innerText = expectedCash.toLocaleString('en-US');
-            let diff = actualCash - expectedCash;
+            let calculatedCash = actualCash + totalExpense - offBillSales;
+            document.getElementById('dsExpected').innerText = calculatedCash.toLocaleString('en-US');
+            let diff = calculatedCash - posRemit;
             let diffBox = document.getElementById('dsDiffBox');
             let btn = document.getElementById('btnDrSubmit');
-            if (actualCash === 0 && cashSales === 0 && offBillSales === 0) { diffBox.className = 'ds-diff status-short'; diffBox.innerText = 'รอการนับเงิน...'; btn.disabled = true; }
-            else { btn.disabled = false; if (diff === 0) { diffBox.className = 'ds-diff status-ok'; diffBox.innerHTML = '✅ ยอดเงินตรงเป๊ะ (Match)'; } else if (diff > 0) { diffBox.className = 'ds-diff status-over'; diffBox.innerHTML = '🟡 เงินเกิน: +' + diff.toLocaleString('en-US') + ' บาท'; } else { diffBox.className = 'ds-diff status-short'; diffBox.innerHTML = '🔴 เงินขาด: ' + diff.toLocaleString('en-US') + ' บาท'; } }
+            if (posRemit === 0) { diffBox.className = 'ds-diff status-short'; diffBox.innerText = 'รอกรอกยอดนำส่ง (ตาม POS)...'; btn.disabled = true; }
+            else { btn.disabled = false; if (diff === 0) { diffBox.className = 'ds-diff status-ok'; diffBox.innerHTML = '✅ ยอดเงินตรงเป๊ะ (Match)'; } else if (diff > 0) { diffBox.className = 'ds-diff status-over'; diffBox.innerHTML = '🟡 เงินเกิน: +' + diff.toLocaleString('en-US') + ' บาท'; } else { diffBox.className = 'ds-diff status-short'; diffBox.innerHTML = '🔴 เงินขาด: ' + Math.abs(diff).toLocaleString('en-US') + ' บาท'; } }
         }
 
         function clearPrintClasses() { document.body.classList.remove('printing-drawer', 'printing-exchange', 'print-summary-only', 'printing-recon'); }
@@ -487,7 +486,7 @@
         let pbLastWarnAt = 0; // เวลาล่าสุดที่เด้ง notification เตือนหลุดการเชื่อมต่อ (กันสแปม)
 
         // [BACKFILL] dedup ถาวรด้วย push.iden — กันนับซ้ำระหว่าง realtime WS กับ poll backfill
-        // (ต่างจาก signature 3 วิใน pbInject ที่ออกแบบมากันแค่ push/mirror เด้งซ้อนกันตอนเดียว)
+        // (ต่างจาก signature-dedup ใน pbInject ที่ออกแบบมากันซ้ำจากเนื้อหา/ยอด+ชื่อ+เวลา ข้ามมือถือหลายเครื่อง)
         var _pbProcessedIdens = (function() {
             try { return JSON.parse(localStorage.getItem('pbProcessedIdens')) || []; } catch(e) { return []; }
         })();
@@ -502,8 +501,6 @@
         // [FIX #6] ตัวแปรสำหรับ debounce + dedup
         let _pbInjectQueue = [];
         let _pbInjectProcessing = false;
-        window._lastPbSig = "";
-        window._lastPbTime = 0;
 
         // โหลด token + config ที่เคยบันทึกไว้ + auto-connect ทันทีถ้ามี token
         // (เดิมเชื่อมต่อก็ต่อเมื่อเปิด Modal กระทบยอดครั้งแรกของเซสชันเท่านั้น —
@@ -812,32 +809,99 @@
         }
 
         // ==========================================
-        // [FIX #9] pbInject — รวมจาก Override Patch + แก้ Dedup
-        // [FIX #4] ลด Dedup Window จาก 10 → 3 วินาที + ใช้ Signature ที่เฉพาะเจาะจงกว่า
+        // [FIX ร้านเหนือ] Dedup ข้ามมือถือ 3 เครื่อง — เดิมจำแค่รายการล่าสุด 1 อันภายใน 3 วิ
+        // ซึ่งพลาดกรณี 3 เครื่องแจ้งเตือนเวลาห่างกันเกิน 3 วิ (ปกติมากเพราะแต่ละเครื่องดีเลย์ไม่
+        // เท่ากัน) ตอนนี้จำย้อนหลัง 10 นาที และใช้ ยอด+ชื่อผู้โอน+เวลาที่ฝังในข้อความ (ไม่ใช่เวลาที่
+        // เครื่องได้รับ) เป็นกุญแจหลัก เพราะข้อความถุงเงินมีเวลาละเอียดถึงวินาทีอยู่แล้ว — แม่นกว่า
+        // จับคู่ข้อความเต็มเวลาที่ต่างเครื่องอาจได้รับช้าเร็วไม่พร้อมกัน
+        // กรณี "ไม่แน่ใจ" (ยอดตรงกับรายการเมื่อครู่ แต่แกะชื่อ/เวลาไม่ได้ฝั่งใดฝั่งหนึ่ง เลยเทียบกุญแจ
+        // แม่นๆ ไม่ได้) จะไม่ตัดสินเงียบๆ ทั้งสองทาง (ทิ้งไปเฉยๆ หรือบันทึกซ้ำไปเลย) แต่ขึ้นแจ้งเตือน
+        // "สงสัยซ้ำ — แตะยืนยัน" ให้คนตัดสินใจแทน
         // ==========================================
+        var PB_DEDUP_WINDOW_MS = 10 * 60 * 1000;   // จำกุญแจแม่น (ยอด+ชื่อ+เวลา) / ข้อความเต็ม ย้อนหลัง 10 นาที
+        var PB_AMBIGUOUS_WINDOW_MS = 60 * 1000;    // เทียบยอดอย่างเดียว (กรณีแกะชื่อ/เวลาไม่ได้) แค่ 1 นาที กันชนกับลูกค้าคนอื่นที่จ่ายเลขกลมพอดี
+        if (!window._pbRecentSigs) window._pbRecentSigs = [];
+        if (!window._pbPendingConfirm) window._pbPendingConfirm = {};
+
+        function extractPbNameTime(text) {
+            var t = (text || '');
+            var nameMatch = t.match(/จาก\s*(.*?)(?:\s*วันที่|\s*เวลา|\s*จำนวน|\s*ยอด|$)/);
+            var name = (nameMatch && nameMatch[1]) ? nameMatch[1].trim() : null;
+            var timeMatch = t.match(/([0-2]?[0-9][:.][0-5][0-9](?:[:.][0-5][0-9])?)/);
+            var time = timeMatch ? timeMatch[1] : null;
+            return { name: name, time: time };
+        }
+
+        function showPbDupConfirm(fallbackSig, amount, srcType, rawTitle, rawBody) {
+            window._pbPendingConfirm[fallbackSig] = { amount: amount, srcType: srcType, rawTitle: rawTitle, rawBody: rawBody };
+            var box = document.getElementById('pbDupToast');
+            if (!box) { doPbInject(amount, srcType, rawTitle, rawBody); return; } // ยังไม่มี UI ให้แตะยืนยัน บันทึกไปเลยดีกว่าทิ้งเงียบ
+            document.getElementById('pbDupToastMsg').innerText = '❓ สงสัยซ้ำ: +' + amount.toLocaleString('en-US') + ' ฿ — แตะยืนยันเพื่อบันทึก';
+            box.dataset.sig = fallbackSig;
+            box.classList.add('show');
+            pbLog('❓ สงสัยซ้ำ (ยอดตรงรายการเมื่อครู่ แต่ยืนยันชื่อ/เวลาไม่ได้): +' + amount.toLocaleString('en-US') + ' ฿ — รอแตะยืนยัน', 'w');
+        }
+
+        function confirmPbDup() {
+            var box = document.getElementById('pbDupToast');
+            var sig = box.dataset.sig;
+            var pending = window._pbPendingConfirm[sig];
+            box.classList.remove('show');
+            if (!pending) return;
+            delete window._pbPendingConfirm[sig];
+            doPbInject(pending.amount, pending.srcType, pending.rawTitle, pending.rawBody);
+        }
+
+        function dismissPbDup() {
+            var box = document.getElementById('pbDupToast');
+            var sig = box.dataset.sig;
+            delete window._pbPendingConfirm[sig];
+            box.classList.remove('show');
+            pbLog('🗑️ ทิ้งรายการที่สงสัยซ้ำ (ยืนยันว่าไม่บันทึก)', 'i');
+        }
+
         function pbInject(amount, srcType, rawTitle, rawBody) {
-            // --- ระบบป้องกันการบันทึกซ้ำซ้อน (Deduplication) ---
             var now = Date.now();
             var fullTextToParse = ((rawBody || '') + " " + (rawTitle || '')).replace(/\n/g, ' ');
+            var fallbackSig = amount + "_" + fullTextToParse;
 
-            // [FIX] ใช้ข้อความเต็มแทนตัด 30 ตัวแรก — เดิมตัดสั้นเกินไป ทำให้สองรายการที่
-            // "ยอดเท่ากันพอดี" จากคนละคนซึ่งเข้ามาไม่ถึง 3 วิ (ปกติมากตอนลูกค้าเยอะๆ จ่ายเลขกลมๆ
-            // เช่น 20/50/100 บาท พร้อมกัน) ถูกมองว่าเป็น push+mirror ซ้ำกันของรายการเดียว ทั้งที่
-            // ชื่อผู้โอนจริงต่างกัน (แค่บังเอิญอยู่หลังตำแหน่งที่ 30 ของเทมเพลตแจ้งเตือนธนาคาร) —
-            // เลยถูกข้ามไปเงียบๆ ไม่บันทึกทั้งที่เป็นรายการจริง ข้อความเต็มยังจับ push+mirror ของ
-            // เหตุการณ์เดียวกันได้เหมือนเดิม (เนื้อหาเหมือนกันทุกตัวอักษร) แต่ไม่ชนกับรายการอื่นที่
-            // ชื่อผู้โอนต่างกันอีกต่อไป
-            var sig = amount + "_" + fullTextToParse;
+            window._pbRecentSigs = window._pbRecentSigs.filter(function(e) { return (now - e.time) < PB_DEDUP_WINDOW_MS; });
 
-            // [FIX #4] ลด window จาก 10 วินาที → 3 วินาที (กันแอปเด้งเบิ้ล push+mirror)
-            if (window._lastPbSig === sig && (now - window._lastPbTime) < 3000) {
-                pbLog('⚠️ ข้ามการบันทึกซ้ำซ้อนภายใน 3 วินาที', 'w');
+            var parts = extractPbNameTime(fullTextToParse);
+            var preciseKey = (parts.name && parts.time) ? (amount + "_" + parts.name + "_" + parts.time) : null;
+
+            // 1) ข้อความเหมือนกันทุกตัวอักษร (push+mirror จากมือถือเครื่องเดียวกัน หรือ 3 เครื่องพิมพ์ข้อความเป๊ะๆ เดียวกัน)
+            if (window._pbRecentSigs.some(function(e) { return e.fallbackSig === fallbackSig; })) {
+                pbLog('⚠️ ข้ามการบันทึกซ้ำซ้อน (ข้อความเดียวกัน ภายใน 10 นาที)', 'w');
                 return;
             }
-            window._lastPbSig = sig;
-            window._lastPbTime = now;
-            // ---------------------------------------------
 
+            // 2) ยอด+ชื่อผู้โอน+เวลาในข้อความตรงกัน — ตัดสินได้แน่ชัดว่าเป็นรายการเดียวกัน แม้มาจากคนละเครื่อง/คนละเวลาที่ได้รับ
+            if (preciseKey && window._pbRecentSigs.some(function(e) { return e.preciseKey === preciseKey; })) {
+                pbLog('⚠️ ข้ามการบันทึกซ้ำซ้อน (ยอด+ชื่อ+เวลาตรงกัน): ' + preciseKey, 'w');
+                return;
+            }
+
+            // 3) ไม่แน่ใจ: ยอดตรงกับรายการเมื่อครู่ แต่ฝั่งใดฝั่งหนึ่งแกะชื่อ/เวลาจากข้อความไม่ได้ เลยพิสูจน์ด้วยกุญแจแม่นไม่ได้
+            var ambiguousMatch = window._pbRecentSigs.some(function(e) {
+                return e.amount === amount && (now - e.time) < PB_AMBIGUOUS_WINDOW_MS && (!preciseKey || !e.preciseKey);
+            });
+
+            window._pbRecentSigs.push({ fallbackSig: fallbackSig, preciseKey: preciseKey, amount: amount, time: now });
+
+            if (ambiguousMatch) {
+                showPbDupConfirm(fallbackSig, amount, srcType, rawTitle, rawBody);
+                return;
+            }
+
+            doPbInject(amount, srcType, rawTitle, rawBody);
+        }
+
+        // ==========================================
+        // [FIX #9] doPbInject — รวมจาก Override Patch + แก้ Dedup (บันทึกจริง หลังผ่านการกันซ้ำใน pbInject แล้ว)
+        // ==========================================
+        function doPbInject(amount, srcType, rawTitle, rawBody) {
+            var fullTextToParse = ((rawBody || '') + " " + (rawTitle || '')).replace(/\n/g, ' ');
             var cfg = getPbConfig();
             var toTable = document.getElementById('pbToTable') ? document.getElementById('pbToTable').checked : true;
 
@@ -910,7 +974,7 @@
         // ==========================================
         function handlePbPush(push) {
             // [BACKFILL] iden ถาวร กันนับซ้ำระหว่าง realtime กับ poll backfill (ถ้าไม่มี iden
-            // ให้ผ่านไปพึ่ง signature-dedup 3 วิใน pbInject แทน)
+            // ให้ผ่านไปพึ่ง signature-dedup ใน pbInject แทน — ดูรายละเอียดที่นิยาม pbInject)
             if (push.iden && isPushProcessed(push.iden)) {
                 pbLog('⏭️ ข้าม (ประมวลผลแล้ว): ' + push.iden, 'i');
                 return;

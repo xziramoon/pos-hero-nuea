@@ -237,13 +237,12 @@
             <div class="modal-header"><h3 style="color: #ea580c;">🧮 นับเงินในลิ้นชัก</h3><button class="close-btn" onclick="closeDrawerModal()">×</button></div>
             <table class="table-grid"><thead><tr><th>ชนิดเงิน</th><th>จำนวน</th><th>รวมมูลค่า</th></tr></thead><tbody id="drawerTableBody"></tbody></table>
             <div class="drawer-summary">
-                <div class="ds-row"><span>เงินทอนตั้งต้น:</span> <span style="font-weight:bold;">7,000</span></div>
-                <div class="ds-row" style="color: var(--success);"><span>บวก ยอดขายเงินสด:</span> <input type="number" id="dsCashSales" class="num-input" style="width: 90px; text-align: right;" placeholder="0" oninput="calcDrawer()"></div>
-                <div class="ds-row" style="color: var(--danger);"><span>หัก ค่าใช้จ่ายระหว่างวัน:</span> <span id="dsExpense">-0</span></div>
+                <div class="ds-total"><span>เงินสดนับได้ (จากตาราง):</span> <span id="dsActual">0</span></div>
+                <div class="ds-row" style="color: var(--success);"><span>บวก ค่าใช้จ่ายระหว่างวัน:</span> <span id="dsExpense">+0</span></div>
                 <div class="ds-row" style="color: var(--danger);"><span>หัก ยอดขายนอกบิล:</span> <input type="number" id="dsOffBill" class="num-input" style="width: 90px; text-align: right;" placeholder="0" oninput="calcDrawer()"></div>
                 <div class="ds-divider"></div>
-                <div class="ds-row" style="color: var(--primary);"><span>ยอดที่ควรมี:</span> <span id="dsExpected" style="font-weight:bold;">7,000</span></div>
-                <div class="ds-total"><span>ยอดที่นับได้จริง:</span> <span id="dsActual">0</span></div>
+                <div class="ds-row" style="color: var(--primary);"><span>= ยอดจากการนับ:</span> <span id="dsExpected" style="font-weight:bold;">0</span></div>
+                <div class="ds-row"><span>ยอดนำส่ง (ตาม POS):</span> <input type="number" id="dsCashSales" class="num-input" style="width: 90px; text-align: right;" placeholder="0" oninput="calcDrawer()"></div>
                 <div id="dsDiffBox" class="ds-diff status-short">รอการนับเงิน...</div>
             </div>
             <button id="btnDrSubmit" class="btn-action" style="background: #ea580c;" onclick="executePrintDrawer()" disabled>🖨️ พิมพ์ใบนับเงิน</button>
@@ -354,11 +353,12 @@
     </div>
 
     <!-- PRINT AREA: ลิ้นชัก และ แลกเงิน -->
-    <div id="printDrawerArea"><div class="slip-title">นับเงินในลิ้นชัก</div><div class="slip-header"><div>วันที่: <span id="slipDrDate"></span> เวลา: <span id="slipDrTime"></span></div><div>แคชเชียร์: <span id="slipDrCashier" style="font-weight: bold;"></span></div></div><table class="slip-table"><thead><tr><th>ชนิดเงิน</th><th>จำนวน</th><th>มูลค่า</th></tr></thead><tbody id="slipDrBody"></tbody></table><div class="slip-summary-box"><div class="slip-summary-row"><span>ยอดขายเงินสด:</span> <span id="slipDrSales">0</span></div><div class="slip-summary-row" style="color: #666; font-size: 12px;"><span>หัก ค่าใช้จ่าย:</span> <span id="slipDrExpense">-0</span></div><div class="slip-summary-row" style="color: #666; font-size: 12px;"><span>หัก ยอดขายนอกบิล:</span> <span id="slipDrOffBill">-0</span></div><div class="slip-summary-row" style="margin-top: 5px; border-top: 1px dotted #ccc; padding-top: 5px;"><span>ยอดที่ควรมี:</span> <span id="slipDrExpected">0</span></div><div class="slip-summary-row"><span>ยอดที่นับได้:</span> <span id="slipDrActual">0</span></div><div class="slip-summary-row" style="margin-top:5px; border-top:1px dotted #000; padding-top:5px;"><span>ผลการนับ:</span> <span id="slipDrDiff"></span></div></div><div class="slip-footer-sig">ผู้ตรวจสอบ ......................................</div></div>
+    <div id="printDrawerArea"><div class="slip-title">นับเงินในลิ้นชัก</div><div class="slip-header"><div>วันที่: <span id="slipDrDate"></span> เวลา: <span id="slipDrTime"></span></div><div>แคชเชียร์: <span id="slipDrCashier" style="font-weight: bold;"></span></div></div><table class="slip-table"><thead><tr><th>ชนิดเงิน</th><th>จำนวน</th><th>มูลค่า</th></tr></thead><tbody id="slipDrBody"></tbody></table><div class="slip-summary-box"><div class="slip-summary-row"><span>เงินสดนับได้:</span> <span id="slipDrActual">0</span></div><div class="slip-summary-row" style="color: #666; font-size: 12px;"><span>บวก ค่าใช้จ่าย:</span> <span id="slipDrExpense">+0</span></div><div class="slip-summary-row" style="color: #666; font-size: 12px;"><span>หัก ยอดขายนอกบิล:</span> <span id="slipDrOffBill">-0</span></div><div class="slip-summary-row" style="margin-top: 5px; border-top: 1px dotted #ccc; padding-top: 5px;"><span>= ยอดจากการนับ:</span> <span id="slipDrExpected">0</span></div><div class="slip-summary-row"><span>ยอดนำส่ง (ตาม POS):</span> <span id="slipDrSales">0</span></div><div class="slip-summary-row" style="margin-top:5px; border-top:1px dotted #000; padding-top:5px;"><span>ผลการนับ:</span> <span id="slipDrDiff"></span></div></div><div class="slip-footer-sig">ผู้ตรวจสอบ ......................................</div></div>
     <div id="printExchangeArea"><div class="slip-title">ขอแลกเงิน</div><div class="slip-header"><div>วันที่: <span id="slipExDate"></span> เวลา: <span id="slipExTime"></span></div><div>แคชเชียร์: <span id="slipExCashier" style="font-weight: bold;"></span></div></div><table class="slip-table"><thead><tr><th>รายการเงินแลก</th><th>จำนวนบาท</th></tr></thead><tbody id="slipExBody"></tbody></table><div class="slip-summary-box" style="text-align: center;">รวมเงินทั้งหมด: <span id="slipExTotalVal">0</span> บาท</div><div class="slip-footer-sig">ผู้รับเงิน ......................................</div></div>
 
     <!-- ✨ v5: Undo Toast + Restore file input -->
     <div id="undoToast" class="undo-toast no-print"><span id="undoToastMsg">ลบรายการแล้ว</span><button onclick="undoDelete()">↩️ กู้คืน</button></div>
+    <div id="pbDupToast" class="undo-toast pb-dup-toast no-print"><span id="pbDupToastMsg">สงสัยซ้ำ</span><div class="pb-dup-actions"><button onclick="confirmPbDup()">✅ ยืนยันบันทึก</button><button onclick="dismissPbDup()" style="background:#475569; color:#fff;">✖ ไม่บันทึก</button></div></div>
     <input type="file" id="restoreFile" accept=".json,application/json" style="display:none" onchange="restoreData(event)">
 
     <!-- JAVASCRIPT CORE (unchanged logic from thai-pos-system) -->

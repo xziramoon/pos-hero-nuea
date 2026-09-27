@@ -130,6 +130,11 @@
         .undo-toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 999; opacity: 0; transition: all 0.25s ease; pointer-events: none; max-width: 90vw; }
         .undo-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
         .undo-toast button { background: var(--warning); border: none; color: #000; font-weight: 800; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-family: 'Sarabun'; font-size: 13px; white-space: nowrap; }
+        /* [FIX] pbDupToast มีข้อความยาวกว่า + ปุ่ม 2 ปุ่ม — จัดแถวเดียวแบบ undo-toast แล้วบีบจนอ่านไม่ออก
+           (คำไทยแยกบรรทัดทีละคำ) เลยแยกเป็นคอลัมน์ ข้อความ 1 แถว ปุ่ม 1 แถว แทน */
+        .pb-dup-toast { flex-direction: column; align-items: stretch; gap: 10px; width: 300px; max-width: 90vw; text-align: center; }
+        .pb-dup-toast span { white-space: normal; }
+        .pb-dup-toast .pb-dup-actions { display: flex; gap: 10px; justify-content: center; }
         .tab-count { display: inline-block; background: rgba(0,0,0,0.12); border-radius: 10px; padding: 0 6px; font-size: 10px; margin-left: 4px; min-width: 12px; text-align: center; }
         .filter-tab.active .tab-count { background: rgba(255,255,255,0.25); }
         .edited-mark { font-size: 10px; color: var(--warning); margin-left: 3px; }
