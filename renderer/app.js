@@ -900,7 +900,48 @@
         // ==========================================
         // [FIX #9] doPbInject — รวมจาก Override Patch + แก้ Dedup (บันทึกจริง หลังผ่านการกันซ้ำใน pbInject แล้ว)
         // ==========================================
+        // [HOLD] เงินโอนที่ตรงกับ QR ล็อกยอด: ยังไม่บันทึกลงตาราง รอพนักงานกด F12 (จอลูกค้าตรวจเจอว่าบันทึกบิลแล้ว) ค่อยบันทึก
+        var PB_HOLD_MAX_MS = 10 * 60 * 1000;
+        window._pbHeld = window._pbHeld || [];
+        function pbHeldSave() { try { localStorage.setItem('posHeldTransfers', JSON.stringify(window._pbHeld.map(function(h){ return { amount: h.amount, srcType: h.srcType, rawTitle: h.rawTitle, rawBody: h.rawBody }; }))); } catch (e) {} }
+        function pbReleaseHeld(reason) {
+            var list = window._pbHeld.splice(0);
+            pbHeldSave();
+            list.forEach(function(h) {
+                clearTimeout(h.timer);
+                pbLog('🔓 ' + reason + ' → บันทึกเงินโอน +' + h.amount.toLocaleString('en-US') + ' ฿', 'i');
+                doPbInjectNow(h.amount, h.srcType, h.rawTitle, h.rawBody, true);
+            });
+        }
         function doPbInject(amount, srcType, rawTitle, rawBody) {
+            var tt = document.getElementById('pbToTable');
+            var canHold = (!tt || tt.checked) && window.heroWindow && window.heroWindow.qrlockHold && window.heroWindow.onBillSaved;
+            if (!canHold) { doPbInjectNow(amount, srcType, rawTitle, rawBody, false); return; }
+            var evt = { amount: amount, text: String(srcType || '') + ' ' + String(rawTitle || '') + ' ' + String(rawBody || ''), ts: Date.now() };
+            Promise.resolve(window.heroWindow.qrlockHold(evt)).then(function(held) {
+                if (!held) { doPbInjectNow(amount, srcType, rawTitle, rawBody, false); return; }
+                var h = { amount: amount, srcType: srcType, rawTitle: rawTitle, rawBody: rawBody };
+                h.timer = setTimeout(function() {
+                    var i = window._pbHeld.indexOf(h); if (i < 0) return;
+                    window._pbHeld.splice(i, 1); pbHeldSave();
+                    pbLog('⏱️ ครบเวลารอ F12 → บันทึกเงินโอนให้เอง +' + amount.toLocaleString('en-US') + ' ฿', 'w');
+                    doPbInjectNow(amount, srcType, rawTitle, rawBody, true);
+                }, PB_HOLD_MAX_MS);
+                window._pbHeld.push(h); pbHeldSave();
+                pbLog('⏳ รับเงินตรง QR แล้ว +' + amount.toLocaleString('en-US') + ' ฿ — รอกด F12 บันทึกบิล แล้วจะบันทึกให้', 'i');
+            }, function() { doPbInjectNow(amount, srcType, rawTitle, rawBody, false); });
+        }
+        try { if (window.heroWindow && window.heroWindow.onBillSaved) window.heroWindow.onBillSaved(function() { if (window._pbHeld.length) pbReleaseHeld('กด F12 บันทึกบิลแล้ว'); }); } catch (e) {}
+        // เปิดโปรแกรมใหม่: ของที่ถือค้างจากรอบก่อนบันทึกเลย ไม่ให้เงินหาย
+        setTimeout(function() {
+            try {
+                var left = JSON.parse(localStorage.getItem('posHeldTransfers') || '[]');
+                localStorage.removeItem('posHeldTransfers');
+                if (Array.isArray(left)) left.forEach(function(h) { pbLog('🔓 เปิดโปรแกรมใหม่ → บันทึกเงินโอนที่ค้างรอ F12 +' + h.amount.toLocaleString('en-US') + ' ฿', 'w'); doPbInjectNow(h.amount, h.srcType, h.rawTitle, h.rawBody, true); });
+            } catch (e) {}
+        }, 1500);
+
+        function doPbInjectNow(amount, srcType, rawTitle, rawBody, skipQr) {
             var fullTextToParse = ((rawBody || '') + " " + (rawTitle || '')).replace(/\n/g, ' ');
             var cfg = getPbConfig();
             var toTable = document.getElementById('pbToTable') ? document.getElementById('pbToTable').checked : true;
@@ -943,7 +984,7 @@
                 if (window.heroWindow && window.heroWindow.notifyMoneyIn) {
                     window.heroWindow.notifyMoneyIn(amount, recordName, recType);
                 }
-                try { if (window.heroWindow && window.heroWindow.qrlockPaid) window.heroWindow.qrlockPaid({ amount: amount, text: String(srcType || '') + ' ' + String(rawTitle || '') + ' ' + String(rawBody || ''), ts: Date.now() }); } catch (e) { /* QR-LOCK ต้องไม่กระทบการบันทึก */ }
+                try { if (!skipQr && window.heroWindow && window.heroWindow.qrlockPaid) window.heroWindow.qrlockPaid({ amount: amount, text: String(srcType || '') + ' ' + String(rawTitle || '') + ' ' + String(rawBody || ''), ts: Date.now() }); } catch (e) { /* QR-LOCK ต้องไม่กระทบการบันทึก */ }
                 if (typeof celebrateTransaction === 'function') celebrateTransaction(amount, { moneyIn: true });
             }
 

@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('heroWindow', {
   getPinState: () => ipcRenderer.invoke('window:get-pin-state'),
   onPinStateChanged: (callback) => ipcRenderer.on('pin-state-changed', (_event, pinned) => callback(pinned)),
   qrlockPaid: (evt) => ipcRenderer.send('qrlock:payment', evt),
+  qrlockHold: (evt) => ipcRenderer.invoke('qrlock:hold', evt),
+  onBillSaved: (callback) => ipcRenderer.on('pos:bill-saved', () => callback()),
   notifyMoneyIn: (amount, name, type) => ipcRenderer.send('money:in', { amount, name, type }),
   notifyPbDisconnected: (downMinutes) => ipcRenderer.send('pb:disconnected-warning', downMinutes),
   pollMissedPushes: (token, sinceTs) => ipcRenderer.invoke('pb:poll-missed', { token, sinceTs }),
