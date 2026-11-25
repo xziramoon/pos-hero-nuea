@@ -7,6 +7,12 @@ const { execFile } = require('child_process');
 
 app.setAppUserModelId('com.xziramoon.poshero');
 
+// QR ล็อกยอด + จอลูกค้าแสดงรายการสินค้า — โมดูลแยก ปิดได้ พังตรงนี้ต้องไม่กระทบ POS
+let qrlock = null;
+try { qrlock = require('./qrlock/qrlock-main'); } catch (e) { console.warn('[qrlock] load failed:', e && e.message); qrlock = null; }
+let custdisplay = null;
+try { custdisplay = require('./custdisplay'); } catch (e) { console.warn('[custdisplay] load failed:', e && e.message); custdisplay = null; }
+
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 
@@ -189,6 +195,8 @@ function refreshTrayMenu() {
     } },
     { label: '↩️ กลับไปมุมจอ', click: () => dockToCorner() },
     { type: 'separator' },
+    ...(qrlock ? (() => { try { return qrlock.trayItems(); } catch (e) { return []; } })() : []),
+    ...(custdisplay && qrlock ? (() => { try { return custdisplay.trayItems(); } catch (e) { return []; } })() : []),
     { label: '🔄 ตรวจสอบอัปเดต', click: () => {
       manualUpdateCheck = true;
       // The 'error' event (below) already shows a notification and covers
@@ -305,6 +313,9 @@ app.whenReady().then(() => {
   lastMiniPosition = loadMiniPosition();
   createWindow();
   createTray();
+
+  try { if (qrlock) qrlock.init({ app, onChange: () => { try { refreshTrayMenu(); } catch (e) { /* ignore */ } } }); } catch (e) { console.warn('[qrlock] init failed:', e && e.message); }
+  try { if (custdisplay && qrlock) custdisplay.init({ app, qrlock, onChange: () => { try { refreshTrayMenu(); } catch (e) { /* ignore */ } } }); } catch (e) { console.warn('[custdisplay] init failed:', e && e.message); }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -476,6 +487,8 @@ ipcMain.handle('print:raw', async (_event, rect) => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  try { if (custdisplay) custdisplay.shutdown(); } catch (e) { /* ignore */ }
+  try { if (qrlock) qrlock.shutdown(); } catch (e) { /* ignore */ }
 });
 
 ipcMain.on('window:minimize', () => {
