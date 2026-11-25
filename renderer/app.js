@@ -943,6 +943,7 @@
                 if (window.heroWindow && window.heroWindow.notifyMoneyIn) {
                     window.heroWindow.notifyMoneyIn(amount, recordName, recType);
                 }
+                try { if (window.heroWindow && window.heroWindow.qrlockPaid) window.heroWindow.qrlockPaid({ amount: amount, text: String(srcType || '') + ' ' + String(rawTitle || '') + ' ' + String(rawBody || ''), ts: Date.now() }); } catch (e) { /* QR-LOCK ต้องไม่กระทบการบันทึก */ }
                 if (typeof celebrateTransaction === 'function') celebrateTransaction(amount, { moneyIn: true });
             }
 
