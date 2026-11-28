@@ -38,7 +38,7 @@ function push() {
     const key = JSON.stringify(v);
     if (key !== lastKey) { lastKey = key; qrlock.showCart(v); }
     // เข้าหน้า "ขอบคุณ" = กด F12 บันทึกบิลแล้ว → แจ้งผู้ใช้ (ใช้ปล่อยเงินโอนที่ถือไว้)
-    if (v.type === 'thanks' && lastType !== 'thanks' && ctx.onBillSaved) { try { ctx.onBillSaved(); } catch (e) { /* ignore */ } }
+    if (v.type === 'thanks' && lastType !== 'thanks' && ctx.onBillSaved) { try { ctx.onBillSaved({ transfer: Number(st.thanksTransfer) || 0 }); } catch (e) { /* ignore */ } }
     lastType = v.type;
     clearTimeout(wakeTimer); wakeTimer = null;
     const w = logic.nextWakeup(st, now);

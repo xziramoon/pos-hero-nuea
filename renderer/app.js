@@ -904,14 +904,27 @@
         var PB_HOLD_MAX_MS = 10 * 60 * 1000;
         window._pbHeld = window._pbHeld || [];
         function pbHeldSave() { try { localStorage.setItem('posHeldTransfers', JSON.stringify(window._pbHeld.map(function(h){ return { amount: h.amount, srcType: h.srcType, rawTitle: h.rawTitle, rawBody: h.rawBody }; }))); } catch (e) {} }
-        function pbReleaseHeld(reason) {
-            var list = window._pbHeld.splice(0);
-            pbHeldSave();
-            list.forEach(function(h) {
-                clearTimeout(h.timer);
-                pbLog('🔓 ' + reason + ' → บันทึกเงินโอน +' + h.amount.toLocaleString('en-US') + ' ฿', 'i');
-                doPbInjectNow(h.amount, h.srcType, h.rawTitle, h.rawBody, true);
+        function pbReleaseOne(h, msg, level) {
+            var i = window._pbHeld.indexOf(h); if (i < 0) return;
+            window._pbHeld.splice(i, 1); pbHeldSave();
+            clearTimeout(h.timer);
+            pbLog(msg + ' +' + h.amount.toLocaleString('en-US') + ' ฿', level || 'i');
+            doPbInjectNow(h.amount, h.srcType, h.rawTitle, h.rawBody, true);
+        }
+        // ปล่อยเฉพาะบิลที่มียอดช่อง "เงินโอน" ใน POS: ยอดตรงพอดีก่อน ไม่งั้นไล่จากเก่าสุดเท่าที่ยอดโอนของบิลครอบคลุม
+        // บิลเงินสด (เงินโอน = 0) ไม่ปล่อยอะไร
+        function pbBillSaved(bill) {
+            var left = Math.round((Number(bill && bill.transfer) || 0) * 100);
+            if (left <= 0) return;
+            var cents = function(h) { return Math.round(h.amount * 100); };
+            var exact = window._pbHeld.filter(function(h) { return cents(h) === left; })[0];
+            (exact ? [exact] : window._pbHeld.slice()).forEach(function(h) {
+                if (cents(h) > left) return;
+                left -= cents(h);
+                pbReleaseOne(h, '🔓 กด F12 บันทึกบิลเงินโอนแล้ว → บันทึก');
             });
+            // F12 มาก่อนแจ้งเตือนเงินเข้า: จำยอดที่ยังไม่มีเงินมาจับคู่ไว้สักครู่
+            window._pbLastBill = { cents: left, time: Date.now() };
         }
         function doPbInject(amount, srcType, rawTitle, rawBody) {
             var tt = document.getElementById('pbToTable');
@@ -921,17 +934,18 @@
             Promise.resolve(window.heroWindow.qrlockHold(evt)).then(function(held) {
                 if (!held) { doPbInjectNow(amount, srcType, rawTitle, rawBody, false); return; }
                 var h = { amount: amount, srcType: srcType, rawTitle: rawTitle, rawBody: rawBody };
-                h.timer = setTimeout(function() {
-                    var i = window._pbHeld.indexOf(h); if (i < 0) return;
-                    window._pbHeld.splice(i, 1); pbHeldSave();
-                    pbLog('⏱️ ครบเวลารอ F12 → บันทึกเงินโอนให้เอง +' + amount.toLocaleString('en-US') + ' ฿', 'w');
-                    doPbInjectNow(amount, srcType, rawTitle, rawBody, true);
-                }, PB_HOLD_MAX_MS);
+                h.timer = setTimeout(function() { pbReleaseOne(h, '⏱️ ครบเวลารอ F12 → บันทึกเงินโอนให้เอง', 'w'); }, PB_HOLD_MAX_MS);
                 window._pbHeld.push(h); pbHeldSave();
+                var last = window._pbLastBill;
+                if (last && last.cents === Math.round(amount * 100) && Date.now() - last.time < 2 * 60 * 1000) {
+                    window._pbLastBill = null;
+                    pbReleaseOne(h, '🔓 บิลเงินโอนถูกบันทึกไปก่อนแล้ว → บันทึก');
+                    return;
+                }
                 pbLog('⏳ รับเงินตรง QR แล้ว +' + amount.toLocaleString('en-US') + ' ฿ — รอกด F12 บันทึกบิล แล้วจะบันทึกให้', 'i');
             }, function() { doPbInjectNow(amount, srcType, rawTitle, rawBody, false); });
         }
-        try { if (window.heroWindow && window.heroWindow.onBillSaved) window.heroWindow.onBillSaved(function() { if (window._pbHeld.length) pbReleaseHeld('กด F12 บันทึกบิลแล้ว'); }); } catch (e) {}
+        try { if (window.heroWindow && window.heroWindow.onBillSaved) window.heroWindow.onBillSaved(pbBillSaved); } catch (e) {}
         // เปิดโปรแกรมใหม่: ของที่ถือค้างจากรอบก่อนบันทึกเลย ไม่ให้เงินหาย
         setTimeout(function() {
             try {

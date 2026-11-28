@@ -316,7 +316,7 @@ app.whenReady().then(() => {
 
   try { if (qrlock && custdisplay) qrlock.setHoldGate(() => { try { return custdisplay._state().running; } catch (e) { return false; } }); } catch (e) { /* ignore */ }
   try { if (qrlock) qrlock.init({ app, onChange: () => { try { refreshTrayMenu(); } catch (e) { /* ignore */ } } }); } catch (e) { console.warn('[qrlock] init failed:', e && e.message); }
-  try { if (custdisplay && qrlock) custdisplay.init({ app, qrlock, onBillSaved: () => { try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('pos:bill-saved'); } catch (e) { /* ignore */ } }, onChange: () => { try { refreshTrayMenu(); } catch (e) { /* ignore */ } } }); } catch (e) { console.warn('[custdisplay] init failed:', e && e.message); }
+  try { if (custdisplay && qrlock) custdisplay.init({ app, qrlock, onBillSaved: (bill) => { try { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('pos:bill-saved', bill); } catch (e) { /* ignore */ } }, onChange: () => { try { refreshTrayMenu(); } catch (e) { /* ignore */ } } }); } catch (e) { console.warn('[custdisplay] init failed:', e && e.message); }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
