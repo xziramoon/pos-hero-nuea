@@ -47,7 +47,8 @@
     "publish": {
       "provider": "github",
       "owner": "xziramoon",
-      "repo": "pos-hero-nuea"
+      "repo": "pos-hero-nuea",
+      "releaseType": "release"
     }
   },
   "dependencies": {
