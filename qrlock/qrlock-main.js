@@ -248,6 +248,7 @@ function openLog() {
   logWin.on('closed', () => { logWin = null; });
   logWin.loadFile(path.join(__dirname, 'log.html'));
 }
+let holdGate = null; // () => true เมื่อรู้ตอนกด F12 (จอลูกค้าเปิดอยู่)
 const matcher = createMatcher({ getBank: () => cfg.bank });
 function registerIpc() {
   // แจ้งเตือนเงินเข้า (หลังกันซ้ำของ POS Hero แล้ว) → จับคู่กับ QR ที่รออยู่ ถ้าไม่ตรง/ไม่มี QR ไม่ทำอะไรเลย
@@ -262,6 +263,21 @@ function registerIpc() {
       rec.result = r.ok ? 'matched' : r.reason;
       if (r.ok) sessions.markPaid(String(evt.text || '').trim().slice(0, 200));
     } catch (e) { if (rec) rec.result = 'error: ' + e.message; } finally { matchLog(rec); }
+  });
+  // ถือเงินไว้ก่อน: ถ้าตรงกับ QR ที่รออยู่ (และจอลูกค้าเปิดอยู่ จึงรู้ตอนกด F12) → ทำให้ QR เป็น "ชำระแล้ว" แล้วบอก renderer ให้ยังไม่บันทึก
+  ipcMain.handle('qrlock:hold', (_e, evt) => {
+    let rec = null;
+    try {
+      if (!active || !evt || !sessions || !holdGate || !holdGate()) return false;
+      const w = sessions.waiting();
+      if (!w) return false;
+      rec = { ts: new Date().toISOString(), amount: evt.amount, text: String(evt.text || '').slice(0, 80), waiting: { amount: w.amount, startedAt: new Date(w.startedAt).toISOString() }, evtTs: new Date(Number(evt.ts) || Date.now()).toISOString() };
+      const r = matcher({ amount: evt.amount, text: String(evt.text || '').slice(0, 300), ts: Number(evt.ts) || Date.now(), id: evt.id }, w);
+      if (!r.ok) { rec.result = 'hold-' + r.reason; return false; }
+      sessions.markPaid(String(evt.text || '').trim().slice(0, 200));
+      rec.result = 'matched-held';
+      return true;
+    } catch (e) { if (rec) rec.result = 'error: ' + e.message; return false; } finally { if (rec) matchLog(rec); }
   });
   ipcMain.handle('qrlock:log-today', () => {
     try {
@@ -341,4 +357,5 @@ function trayItems() {
     cfg.enabled = true; saveConfig(); await start();
   } }];
 }
-module.exports = { init, shutdown, trayItems, showCart, enableCartDisplay };
+function setHoldGate(fn) { holdGate = typeof fn === 'function' ? fn : null; }
+module.exports = { init, shutdown, trayItems, showCart, enableCartDisplay, setHoldGate };

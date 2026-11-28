@@ -11,7 +11,7 @@ const LOG_MAX = 2 * 1024 * 1024; // เกินนี้ตัดไฟล์ l
 let ctx = null, qrlock = null, spawnFn = null, enabled = false, running = false;
 let cfgPath = null, logPath = null, onChange = null;
 let child = null, rl = null, restartTimer = null, wakeTimer = null, failures = 0, spawnedAt = 0;
-let st = logic.createState(), lastKey = null, replayTimers = [], starting = false;
+let lastType = null, st = logic.createState(), lastKey = null, replayTimers = [], starting = false;
 
 function readCfg() { try { return { enabled: false, ...JSON.parse(fs.readFileSync(cfgPath, 'utf8')) }; } catch (e) { return { enabled: false }; } }
 function saveCfg(c) { try { fs.writeFileSync(cfgPath, JSON.stringify(c, null, 2)); } catch (e) { /* ignore */ } }
@@ -37,6 +37,9 @@ function push() {
     const v = logic.view(st, now);
     const key = JSON.stringify(v);
     if (key !== lastKey) { lastKey = key; qrlock.showCart(v); }
+    // เข้าหน้า "ขอบคุณ" = กด F12 บันทึกบิลแล้ว → แจ้งผู้ใช้ (ใช้ปล่อยเงินโอนที่ถือไว้)
+    if (v.type === 'thanks' && lastType !== 'thanks' && ctx.onBillSaved) { try { ctx.onBillSaved(); } catch (e) { /* ignore */ } }
+    lastType = v.type;
     clearTimeout(wakeTimer); wakeTimer = null;
     const w = logic.nextWakeup(st, now);
     if (w) wakeTimer = setTimeout(push, Math.max(50, w - now) + 20);
