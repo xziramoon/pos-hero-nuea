@@ -58,6 +58,7 @@ function createState() {
     payClosedAt: null,
     thanksUntil: 0,
     thanksChange: null,
+    thanksTransfer: null, // ยอดช่อง "เงินโอน" ของบิลที่เพิ่งบันทึก
   };
 }
 
@@ -112,13 +113,14 @@ function reduce(st, ev, now) {
     // ใบเสร็จเปลี่ยน: ถ้า Pay เพิ่งปิด = บันทึกบิลแล้ว → ขอบคุณ
     const saved = st.receipt !== null && st.payClosedAt !== null && now - st.payClosedAt <= SAVE_WINDOW_MS && st.lastPay;
     const change = saved ? st.lastPay.change : null;
+    const transfer = saved ? st.lastPay.transfer : null;
     Object.assign(st, createState());
     st.receipt = receipt;
     st.total = total;
     st.baseline = line;           // แถบเหลืองยังค้างรายการจากบิลก่อน
     st.baselineTotal = total;
     st.lastLine = line;
-    if (saved) { st.thanksUntil = now + THANKS_MS; st.thanksChange = change; }
+    if (saved) { st.thanksUntil = now + THANKS_MS; st.thanksChange = change; st.thanksTransfer = transfer; }
     return st;
   }
 
